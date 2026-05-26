@@ -1,31 +1,34 @@
 # rnaseq-report-flow
 
 `taf-rnaseq-report-flow` collects outputs from upstream TAFFISH RNA-seq
-subflows and writes a static project report, summary tables, collected key
-files, methods, versions, command provenance, logs, and a manifest under one
-explicit output directory.
+subflows and writes a bilingual static project report, summary tables,
+collected key files, collected plots, linked QC/report HTML bundles, methods,
+versions, command provenance, logs, and a manifest under one explicit output
+directory.
 
 Package identity:
 
 - name: `rnaseq-report-flow`
 - command: `taf-rnaseq-report-flow`
 - kind: `flow`
-- version: `0.1.0-r1`
+- version: `0.1.0-r2`
 - license: Apache-2.0
 
 ## RNA-seq Flow Position
 
 This app is the report-layer subflow in the TAFFISH bulk RNA-seq flow family.
 It can be run directly to collect any compatible upstream RNA-seq flow outputs,
-and it is also designed to be the final reporting step of the future
+and it is also designed to be the final reporting step of the
 `rnaseq-standard-flow` umbrella. The umbrella should reuse this static
 collector rather than duplicate report assembly.
 
 ## Scope
 
-r1 supports static report collection from any combination of these upstream
+r2 supports enhanced static report collection from a completed
+`rnaseq-standard-flow` output directory or any combination of these upstream
 RNA-seq flow output directories:
 
+- `rnaseq-index-flow`
 - `rnaseq-expression-flow`
 - `rnaseq-alignment-flow`
 - `rnaseq-count-flow`
@@ -33,17 +36,19 @@ RNA-seq flow output directories:
 - `rnaseq-de-flow`
 - `rnaseq-enrichment-flow`
 
-At least one upstream output directory is required. All upstream directories are
-read-only inputs. The report flow writes only to its own `--outdir`.
+At least `--standard-out` or one upstream output directory is required. All
+input directories are read-only. The report flow writes only to its own
+`--outdir`.
 
-r1 deliberately does not rerun Salmon, Kallisto, HISAT2, samtools,
+r2 deliberately does not rerun Salmon, Kallisto, HISAT2, samtools,
 featureCounts, RSeQC, Qualimap, DESeq2, ORA, GSEA, MultiQC, or RMarkdown. It
 does not download references, gene sets, or databases. It does not perform
-biological interpretation beyond organizing the upstream flow outputs.
+project-specific biological interpretation beyond organizing the upstream flow
+outputs into bilingual, workflow-oriented sections with plain-language context.
 
 ## Dependencies
 
-r1 has no additional TAFFISH tool dependencies. It is a self-contained static
+r2 has no additional TAFFISH tool dependencies. It is a self-contained static
 collector implemented with the TAFFISH flow shell runtime and ordinary POSIX
 utilities such as `awk`, `sed`, `cp`, `mkdir`, `date`, and `wc`.
 
@@ -51,6 +56,15 @@ Upstream flow dependencies remain recorded in the collected upstream
 `versions.tsv` and `commands.sh` files.
 
 ## Usage
+
+Collect a completed standard-flow run:
+
+```sh
+taf-rnaseq-report-flow \
+  --standard-out rnaseq-standard-out \
+  --project-name "Yeast SNF2 RNA-seq" \
+  --outdir report-out
+```
 
 Collect a DE and enrichment report:
 
@@ -90,10 +104,16 @@ Required:
 
 - `--outdir PATH`, `-o PATH`: output directory. The flow refuses to run if it
   already exists unless `--force` is used.
-- At least one upstream output directory option.
+- `--standard-out PATH` or at least one upstream output directory option.
 
 Optional upstream outputs:
 
+- `--standard-out PATH`: completed `rnaseq-standard-flow` output directory. r2
+  auto-discovers nested `03_results/reference`, `expression`, `alignment`,
+  `count`, `alignment_qc`, `de`, and `enrichment` blocks when present, and
+  consumes the standard-flow top-level `03_results/plots` collection when
+  available.
+- `--reference-out PATH`: output from `rnaseq-index-flow`.
 - `--expression-out PATH`: output from `rnaseq-expression-flow`.
 - `--alignment-out PATH`: output from `rnaseq-alignment-flow`.
 - `--count-out PATH`: output from `rnaseq-count-flow`.
@@ -123,10 +143,16 @@ All flow-created files are written under `<outdir>/`:
   03_results/
     collected_tables/
     collected_plots/
+    collected_html/
   04_reports/
     rnaseq_report.html
     project_summary.tsv
+    key_metrics.tsv
     collected_files.tsv
+    plot_files.tsv
+    plot_gallery.tsv
+    html_reports.tsv
+    tool_links.tsv
     commands.sh
     versions.tsv
     methods.txt
@@ -136,40 +162,92 @@ All flow-created files are written under `<outdir>/`:
 
 Important files:
 
-- `04_reports/rnaseq_report.html`: static project-level report.
+- `04_reports/rnaseq_report.html`: enhanced static project-level report with
+  the real TAFFISH logo embedded from the source asset, one-click
+  English/Chinese switching, overview metrics, module status, biologically
+  organized sections, embedded PNG plots, linked PDFs, table previews, linked
+  QC/report HTML bundles, source links, and provenance pointers.
 - `04_reports/project_summary.tsv`: high-level counts and timestamps.
+- `04_reports/key_metrics.tsv`: report-ready overview metrics extracted from
+  upstream summaries.
 - `04_reports/collected_files.tsv`: map from original upstream files to copied
   report files.
+- `04_reports/plot_files.tsv`: map from original plot files to copied report
+  plot files.
+- `04_reports/plot_gallery.tsv`: one row per plot group, linking PNG and PDF
+  copies when available.
+- `04_reports/html_reports.tsv`: linked HTML report bundles copied from
+  upstream QC/report outputs, such as MultiQC, FastQC, and Qualimap.
+- `04_reports/tool_links.tsv`: collected tool/flow version rows with known
+  TAFFISH or upstream source links.
 - `04_reports/versions.tsv`: report-flow version plus upstream version rows.
 - `04_reports/commands.sh`: report-flow provenance plus upstream command logs.
 - `04_reports/methods.txt`: report-flow methods plus upstream methods text.
 
+## Report Structure
+
+The main HTML is not a single figure dump. r2 uses a modern static layout with
+a sidebar, language switch, project-level metric cards, section-specific plot
+cards, and compact table previews. It organizes content by biological workflow
+meaning:
+
+- Overview: project status, module coverage, and key metrics.
+- Reference preparation: genome, annotation, transcriptome, index, and gene
+  mapping summaries.
+- Read QC and expression quantification: FastQC/MultiQC links, Salmon/Kallisto
+  summaries, and expression matrices.
+- Alignment, counting, and RNA-seq QC: BAM maps, featureCounts summaries,
+  RSeQC/Qualimap/MultiQC links, and optional alignment-route evidence.
+- Differential expression: PCA, sample correlation, expression distributions,
+  MA/volcano plots, DEG counts, heatmap, top-gene expression, and DESeq2 tables.
+- Functional enrichment: ORA/GSEA summaries and readable/original enrichment
+  dotplots.
+- Tools and provenance: TAFFISH links, upstream tool source links, versions,
+  methods, commands, and collected-file indexes.
+
+The report includes the real TAFFISH logo as an embedded image so the generated
+HTML remains portable. The source copy is kept in `assets/taffish-logo.png`.
+The HTML stores both English and Chinese text internally, but only the selected
+language is visible at a time.
+
 ## Collected Content
 
-The flow collects key summary tables and compact plots when present. Examples
-include:
+The flow collects key summary tables, compact plots, and report HTML bundles
+when present. Examples include:
 
+- reference summaries, genome-index metadata, and `tx2gene.tsv`
 - expression matrices and `quant_files.tsv`
 - BAM file maps and alignment summaries
 - featureCounts matrices and assignment summaries
 - RNA-seq alignment QC summaries
-- DESeq2 result tables, gene lists, and DE plots
-- ORA/GSEA result tables and enrichment dotplots
+- DESeq2 result tables, gene lists, plot summaries, and the r2 DE plot set
+- MultiQC reports from expression, alignment, count, and alignment-QC modules
+- FastQC sample reports from expression outputs
+- Qualimap sample reports from alignment-QC outputs
+- ORA/GSEA result tables, dotplot source tables, and readable/original
+  enrichment dotplots
 
-Large upstream reports, such as full MultiQC HTML files, are not copied in r1.
-Their source modules remain listed through the upstream output directories and
-the collected provenance files.
+When `--standard-out` is used and standard-flow has already collected
+DE/enrichment plots under `03_results/plots`, report-flow uses that top-level
+plot collection and avoids duplicating nested DE/enrichment plot copies.
+
+HTML reports are copied with the local asset directories required for offline
+viewing when the upstream tool writes a recognizable bundle. This keeps the
+main report compact while still linking to detailed QC and sample-level
+reports.
 
 ## Validation
 
 `tests/smoke.sh` builds the report flow and runs it on tiny synthetic upstream
-output directories. It checks report generation, collected files, provenance,
+output directories. It checks enhanced HTML report generation, collected
+tables, collected plots, copied HTML report bundles, tool links, provenance,
 `--force`, and output-directory cleanliness.
 
 `tests/formal.sh` uses the central yeast SNF2 count matrix and GO gene-set
 bundle when available. It builds and runs `rnaseq-de-flow`, builds and runs
 `rnaseq-enrichment-flow`, then collects the real `de-out` and `enrichment-out`
-directories through `rnaseq-report-flow`. The central data tree can be prepared
+directories through `rnaseq-report-flow`. It checks the r2 plot gallery and
+embedded-report surface. The central data tree can be prepared
 with `repos/apps/bio/flows/rna-seq/test-data/yeast/rnaseq-yeast-get-data`;
 downstream formal tests read it via `TAFFISH_RNASEQ_TESTDATA` or the default
 local `test-data/yeast/data/03_results` path.
