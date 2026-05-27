@@ -32,6 +32,16 @@ skip_formal() {
     exit 0
 }
 
+assert_no_mojibake() {
+    html_file=$1
+    for marker in "$(printf '\303\246')" "$(printf '\303\247')" "$(printf '\303\245')" "$(printf '\303\244')"; do
+        if LC_ALL=C grep -aq "$marker" "$html_file"; then
+            echo "formal: possible UTF-8/Latin-1 mojibake remains in $html_file" >&2
+            exit 1
+        fi
+    done
+}
+
 if [ ! -d "$data_root" ]; then
     skip_formal "RNA-seq formal data root not found: $data_root"
 fi
@@ -101,7 +111,7 @@ taf check
 echo "[FORMAL] taf build"
 taf build
 
-flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.1.0-r3"
+flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.1.0-r4"
 if [ ! -x "$flow_cmd" ]; then
     echo "formal: built report flow command is missing or not executable: $flow_cmd" >&2
     exit 1
@@ -185,6 +195,7 @@ test -s "$out/01_logs/flow.log"
 test -s "$out/01_logs/steps/01_collect_inputs.log"
 test -s "$out/01_logs/steps/02_render_report.log"
 test -s "$out/04_reports/rnaseq_report.html"
+test -s "$out/04_reports/report_interpretation.html"
 test -s "$out/04_reports/project_summary.tsv"
 test -s "$out/04_reports/key_metrics.tsv"
 test -s "$out/04_reports/collected_files.tsv"
@@ -202,10 +213,15 @@ grep -F 'Yeast SNF2 RNA-seq formal' "$out/04_reports/rnaseq_report.html" >/dev/n
 grep -F 'TAFFISH' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'data-lang-toggle="en"' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'data-lang-toggle="zh"' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'html[data-lang="en"] .lang-zh{display:none!important}' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F '.flow-node>span' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'overflow:visible}.sidebar{position:sticky' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'max-height:calc(100vh - 36px)' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'TAFFISH RNA-seq project report' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'TAFFISH RNA-seq 项目报告' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'How to Read This Report' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F '如何阅读本报告' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'report_interpretation.html' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'Tools and Source Links' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F '工具与来源链接' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'Functional Enrichment' "$out/04_reports/rnaseq_report.html" >/dev/null
@@ -217,6 +233,45 @@ grep -F 'ORA visual summary' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'GSEA directional summary' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'target="_blank" rel="noopener"' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'data:image/png;base64,' "$out/04_reports/rnaseq_report.html" >/dev/null
+assert_no_mojibake "$out/04_reports/rnaseq_report.html"
+grep -F 'RNA-seq Interpretation Guide' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'RNA-seq 报告解读指南' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'guide-sidebar' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'guide-nav' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'Contents' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F '目录' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'RNA-seq Primer' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'RNA-seq 入门' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'From FASTQ to Biological Questions' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F '从 FASTQ 到生物学问题' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'Experimental Design Basics' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F '实验设计基础' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'Statistics Glossary' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F '统计概念速查' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'Beginner FAQ' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F '新手 FAQ' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'Deep-Dive Modules' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F '深度模块解读' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'Reference: biology becomes coordinates' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F '参考：把生物学对象变成坐标和 ID' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'Quantification: abundance is an estimate' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F '表达定量：丰度是估计值' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'Differential expression: variation becomes a model' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F '差异表达：把变异放进模型' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'Report and provenance: reproducibility is evidence' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F '报告与溯源：可复现性也是证据' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'Long-Form Module Chapters' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F '长文模块章节' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'Wet-lab origin' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F '湿实验来源' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'Technical difficulty' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F '技术难点' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'Recommended Reading Order' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F '推荐阅读顺序' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'Common Misinterpretations' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F '常见误读' "$out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'rnaseq_report.html' "$out/04_reports/report_interpretation.html" >/dev/null
+assert_no_mojibake "$out/04_reports/report_interpretation.html"
 grep -F 'provided_modules	2' "$out/04_reports/project_summary.tsv" >/dev/null
 grep -F 'plot_groups	14' "$out/04_reports/project_summary.tsv" >/dev/null
 grep -F 'Collected plots	14' "$out/04_reports/key_metrics.tsv" >/dev/null
@@ -232,6 +287,7 @@ grep -F 'rnaseq-enrichment-flow' "$out/04_reports/versions.tsv" >/dev/null
 grep -F 'rnaseq-de-flow' "$out/04_reports/tool_links.tsv" >/dev/null
 grep -F 'https://github.com/taffish/rnaseq-enrichment-flow' "$out/04_reports/tool_links.tsv" >/dev/null
 grep -F '"flow": "rnaseq-report-flow"' "$out/run.manifest.json" >/dev/null
+grep -F '"interpretation_guide":' "$out/run.manifest.json" >/dev/null
 
 if command -v python3 >/dev/null 2>&1; then
     python3 -m json.tool "$out/run.manifest.json" >/dev/null

@@ -2,16 +2,16 @@
 
 `taf-rnaseq-report-flow` collects outputs from upstream TAFFISH RNA-seq
 subflows and writes a bilingual static project report, summary tables,
-collected key files, collected plots, linked QC/report HTML bundles, methods,
-versions, command provenance, logs, and a manifest under one explicit output
-directory.
+an offline interpretation companion page, collected key files, collected plots,
+linked QC/report HTML bundles, methods, versions, command provenance, logs, and
+a manifest under one explicit output directory.
 
 Package identity:
 
 - name: `rnaseq-report-flow`
 - command: `taf-rnaseq-report-flow`
 - kind: `flow`
-- version: `0.1.0-r3`
+- version: `0.1.0-r4`
 - license: Apache-2.0
 
 ## RNA-seq Flow Position
@@ -24,7 +24,7 @@ collector rather than duplicate report assembly.
 
 ## Scope
 
-r3 supports enhanced static report collection from a completed
+r4 supports enhanced static report collection from a completed
 `rnaseq-standard-flow` output directory or any combination of these upstream
 RNA-seq flow output directories:
 
@@ -40,15 +40,16 @@ At least `--standard-out` or one upstream output directory is required. All
 input directories are read-only. The report flow writes only to its own
 `--outdir`.
 
-r3 deliberately does not rerun Salmon, Kallisto, HISAT2, samtools,
+r4 deliberately does not rerun Salmon, Kallisto, HISAT2, samtools,
 featureCounts, RSeQC, Qualimap, DESeq2, ORA, GSEA, MultiQC, or RMarkdown. It
 does not download references, gene sets, or databases. It does not perform
 project-specific biological interpretation beyond organizing the upstream flow
-outputs into bilingual, workflow-oriented sections with plain-language context.
+outputs into bilingual, workflow-oriented sections with plain-language context
+and a companion RNA-seq primer / interpretation guide.
 
 ## Dependencies
 
-r3 has no additional TAFFISH tool dependencies. It is a self-contained static
+r4 has no additional TAFFISH tool dependencies. It is a self-contained static
 collector implemented with the TAFFISH flow shell runtime and ordinary POSIX
 utilities such as `awk`, `sed`, `cp`, `mkdir`, `date`, and `wc`.
 
@@ -108,7 +109,7 @@ Required:
 
 Optional upstream outputs:
 
-- `--standard-out PATH`: completed `rnaseq-standard-flow` output directory. r3
+- `--standard-out PATH`: completed `rnaseq-standard-flow` output directory. r4
   auto-discovers nested `03_results/reference`, `expression`, `alignment`,
   `count`, `alignment_qc`, `de`, and `enrichment` blocks when present, and
   consumes the standard-flow top-level `03_results/plots`, `03_results/plots/png`,
@@ -146,6 +147,7 @@ All flow-created files are written under `<outdir>/`:
     collected_html/
   04_reports/
     rnaseq_report.html
+    report_interpretation.html
     project_summary.tsv
     key_metrics.tsv
     collected_files.tsv
@@ -167,6 +169,11 @@ Important files:
   English/Chinese switching, overview metrics, module status, biologically
   organized sections, embedded PNG plots, linked PDFs, table previews, linked
   QC/report HTML bundles, source links, and provenance pointers.
+- `04_reports/report_interpretation.html`: offline companion primer explaining
+  RNA-seq basics, experimental design, recommended reading order, module-level
+  biological questions, step-level deep dives that connect biology to technical
+  evidence, common statistics, common RNA-seq plot interpretation, ORA/GSEA
+  boundaries, beginner FAQ, and common misinterpretations.
 - `04_reports/project_summary.tsv`: high-level counts and timestamps.
 - `04_reports/key_metrics.tsv`: report-ready overview metrics extracted from
   upstream summaries.
@@ -186,13 +193,20 @@ Important files:
 
 ## Report Structure
 
-The main HTML is not a single figure dump. r3 uses a modern static layout with
+The main HTML is not a single figure dump. r4 uses a modern static layout with
 a sticky sidebar, scroll-aware active section highlight, language switch,
 static workflow diagrams, project-level metric cards, section-specific plot
-cards, a deliverables section, and compact table previews. It organizes content
-by biological workflow meaning:
+cards, an interpretation-guide entry, a deliverables section, and compact table
+previews. It organizes content by biological workflow meaning:
 
 - Overview: project status, module coverage, and key metrics.
+- Reading guide: one-click link to `04_reports/report_interpretation.html`,
+  plus short interpretation principles for quality, statistics, gene sets, and
+  reusable evidence. The companion page itself is a sticky-sidebar,
+  scroll-aware, bilingual RNA-seq primer for new users and customer-facing
+  explanation, with long-form module chapters covering wet-lab origin,
+  biological meaning, biological difficulty, technical difficulty, flow
+  implementation, report interpretation, and provenance.
 - Reference preparation: genome, annotation, transcriptome, index, and gene
   mapping summaries.
 - Read QC and expression quantification: FastQC/MultiQC links, Salmon/Kallisto
@@ -209,10 +223,20 @@ by biological workflow meaning:
 - Tools and provenance: TAFFISH links, upstream tool source links, versions,
   methods, commands, and collected-file indexes.
 
+Additional written interpretation manuals are included in this repository:
+
+- `docs/report-interpretation.zh.md`
+- `docs/report-interpretation.en.md`
+
 The report includes the real TAFFISH logo as an embedded image so the generated
 HTML remains portable. The source copy is kept in `assets/taffish-logo.png`.
 The HTML stores both English and Chinese text internally, but only the selected
 language is visible at a time.
+
+r4 fixes the workflow-diagram language toggle so English pages do not show
+Chinese helper text in flow cards. It also checks the generated HTML for the
+specific UTF-8/Latin-1 mojibake pattern that can appear on non-UTF-8 server
+locales and repairs that report HTML automatically with `iconv` when needed.
 
 ## Collected Content
 
@@ -247,14 +271,15 @@ reports.
 `tests/smoke.sh` builds the report flow and runs it on tiny synthetic upstream
 output directories. It checks enhanced HTML report generation, collected
 tables, collected plots, copied HTML report bundles, tool links, provenance,
-`--force`, and output-directory cleanliness.
+language-toggle CSS, C-locale rendering, mojibake absence, `--force`, and
+output-directory cleanliness.
 
 `tests/formal.sh` uses the central yeast SNF2 count matrix and GO gene-set
 bundle when available. It builds and runs `rnaseq-de-flow`, builds and runs
 `rnaseq-enrichment-flow` r3, then collects the real `de-out` and
-`enrichment-out` directories through `rnaseq-report-flow`. It checks the r3
+`enrichment-out` directories through `rnaseq-report-flow`. It checks the r4
 plot gallery, workflow diagrams, active navigation hooks, linked report surface,
-and deliverables section. The central data tree can be prepared
+language-toggle CSS, mojibake absence, and deliverables section. The central data tree can be prepared
 with `repos/apps/bio/flows/rna-seq/test-data/yeast/rnaseq-yeast-get-data`;
 downstream formal tests read it via `TAFFISH_RNASEQ_TESTDATA` or the default
 local `test-data/yeast/data/03_results` path.
