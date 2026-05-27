@@ -1,4 +1,4 @@
-rnaseq-report-flow 0.1.0-r2
+rnaseq-report-flow 0.1.0-r3
 
 Purpose:
   Collect outputs from upstream TAFFISH RNA-seq subflows or a completed
@@ -42,11 +42,11 @@ Required input:
   Provide --standard-out or at least one upstream output directory:
 
   --standard-out PATH
-      Completed rnaseq-standard-flow output directory. r2 auto-discovers
+      Completed rnaseq-standard-flow output directory. r3 auto-discovers
       reference, expression, alignment, count, alignment_qc, de, and
       enrichment blocks under PATH/03_results/ when present. It also consumes
-      the standard-flow top-level plot collection under PATH/03_results/plots
-      when available.
+      standard-flow top-level plot collections under PATH/03_results/plots,
+      PATH/03_results/plots/png, and PATH/03_results/plots/pdf when available.
 
   --reference-out PATH
       Output directory from rnaseq-index-flow.
@@ -99,12 +99,14 @@ Output tree:
   <outdir>/run.manifest.json
 
 Report contents:
-  r2 renders a branded TAFFISH HTML report with the real TAFFISH logo embedded
+  r3 renders a branded TAFFISH HTML report with the real TAFFISH logo embedded
   in the HTML, one-click English/Chinese switching, overview metrics, module
-  status, workflow-oriented biological sections, embedded PNG figures, PDF plot
-  links, linked MultiQC/FastQC/Qualimap HTML reports when present, DESeq2 table
-  previews, ORA/GSEA table previews, tool/source links, collected-file indexes,
-  version records, and provenance pointers.
+  status, workflow-oriented biological sections, static workflow diagrams,
+  active sidebar section highlighting while scrolling, embedded PNG figures,
+  PDF plot links, linked MultiQC/FastQC/Qualimap HTML reports when present,
+  DESeq2 table previews, ORA/GSEA table previews, tool/source links,
+  collected-file indexes, deliverables/output-structure summaries, version
+  records, and provenance pointers.
 
   Figures are placed in the sections where they are biologically meaningful:
   reference preparation, read QC and expression quantification, alignment and
@@ -113,17 +115,22 @@ Report contents:
   figure gallery. The HTML keeps both languages internally, but only one
   language is visible at a time.
 
+  Functional enrichment figures include readable/classic dotplots and, when
+  produced by rnaseq-enrichment-flow r3, ORA top-term barplot, GSEA NES plot,
+  and GSEA enrichment curves.
+
   When a completed rnaseq-standard-flow output is supplied, the report uses
   its standardized DE/enrichment PDF and PNG plot collection when available,
-  avoiding duplicate plot copies from the nested subflow directories.
+  including split png/pdf subdirectories, avoiding duplicate plot copies from
+  the nested subflow directories.
 
 Dependencies:
-  r2 has no additional TAFFISH tool dependency. It is a static collector using
+  r3 has no additional TAFFISH tool dependency. It is a static collector using
   shell utilities only. Upstream analysis dependencies are recorded from the
   upstream flow outputs.
 
 Boundaries:
-  r2 does not rerun Salmon, Kallisto, HISAT2, samtools, featureCounts, RSeQC,
+  r3 does not rerun Salmon, Kallisto, HISAT2, samtools, featureCounts, RSeQC,
   Qualimap, DESeq2, enrichment, MultiQC, or RMarkdown. It does not download
   references, gene sets, or databases. It provides bilingual context for
   interpreting workflow modules, but it does not make project-specific

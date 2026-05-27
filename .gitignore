@@ -3,3 +3,4 @@
 *.lx64fsl
 .DS_Store
 release.md
+tests/test-real-run-report*/

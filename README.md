@@ -11,7 +11,7 @@ Package identity:
 - name: `rnaseq-report-flow`
 - command: `taf-rnaseq-report-flow`
 - kind: `flow`
-- version: `0.1.0-r2`
+- version: `0.1.0-r3`
 - license: Apache-2.0
 
 ## RNA-seq Flow Position
@@ -24,7 +24,7 @@ collector rather than duplicate report assembly.
 
 ## Scope
 
-r2 supports enhanced static report collection from a completed
+r3 supports enhanced static report collection from a completed
 `rnaseq-standard-flow` output directory or any combination of these upstream
 RNA-seq flow output directories:
 
@@ -40,7 +40,7 @@ At least `--standard-out` or one upstream output directory is required. All
 input directories are read-only. The report flow writes only to its own
 `--outdir`.
 
-r2 deliberately does not rerun Salmon, Kallisto, HISAT2, samtools,
+r3 deliberately does not rerun Salmon, Kallisto, HISAT2, samtools,
 featureCounts, RSeQC, Qualimap, DESeq2, ORA, GSEA, MultiQC, or RMarkdown. It
 does not download references, gene sets, or databases. It does not perform
 project-specific biological interpretation beyond organizing the upstream flow
@@ -48,7 +48,7 @@ outputs into bilingual, workflow-oriented sections with plain-language context.
 
 ## Dependencies
 
-r2 has no additional TAFFISH tool dependencies. It is a self-contained static
+r3 has no additional TAFFISH tool dependencies. It is a self-contained static
 collector implemented with the TAFFISH flow shell runtime and ordinary POSIX
 utilities such as `awk`, `sed`, `cp`, `mkdir`, `date`, and `wc`.
 
@@ -108,11 +108,11 @@ Required:
 
 Optional upstream outputs:
 
-- `--standard-out PATH`: completed `rnaseq-standard-flow` output directory. r2
+- `--standard-out PATH`: completed `rnaseq-standard-flow` output directory. r3
   auto-discovers nested `03_results/reference`, `expression`, `alignment`,
   `count`, `alignment_qc`, `de`, and `enrichment` blocks when present, and
-  consumes the standard-flow top-level `03_results/plots` collection when
-  available.
+  consumes the standard-flow top-level `03_results/plots`, `03_results/plots/png`,
+  and `03_results/plots/pdf` plot collections when available.
 - `--reference-out PATH`: output from `rnaseq-index-flow`.
 - `--expression-out PATH`: output from `rnaseq-expression-flow`.
 - `--alignment-out PATH`: output from `rnaseq-alignment-flow`.
@@ -186,10 +186,11 @@ Important files:
 
 ## Report Structure
 
-The main HTML is not a single figure dump. r2 uses a modern static layout with
-a sidebar, language switch, project-level metric cards, section-specific plot
-cards, and compact table previews. It organizes content by biological workflow
-meaning:
+The main HTML is not a single figure dump. r3 uses a modern static layout with
+a sticky sidebar, scroll-aware active section highlight, language switch,
+static workflow diagrams, project-level metric cards, section-specific plot
+cards, a deliverables section, and compact table previews. It organizes content
+by biological workflow meaning:
 
 - Overview: project status, module coverage, and key metrics.
 - Reference preparation: genome, annotation, transcriptome, index, and gene
@@ -200,8 +201,11 @@ meaning:
   RSeQC/Qualimap/MultiQC links, and optional alignment-route evidence.
 - Differential expression: PCA, sample correlation, expression distributions,
   MA/volcano plots, DEG counts, heatmap, top-gene expression, and DESeq2 tables.
-- Functional enrichment: ORA/GSEA summaries and readable/original enrichment
-  dotplots.
+- Functional enrichment: ORA/GSEA summaries, readable/classic enrichment
+  dotplots, ORA top-term barplot, GSEA NES ranking, and GSEA enrichment curves
+  when produced by `rnaseq-enrichment-flow` r3.
+- Deliverables: output tree, plot gallery index, HTML report index, and main
+  reusable files.
 - Tools and provenance: TAFFISH links, upstream tool source links, versions,
   methods, commands, and collected-file indexes.
 
@@ -220,16 +224,18 @@ when present. Examples include:
 - BAM file maps and alignment summaries
 - featureCounts matrices and assignment summaries
 - RNA-seq alignment QC summaries
-- DESeq2 result tables, gene lists, plot summaries, and the r2 DE plot set
+- DESeq2 result tables, gene lists, plot summaries, and the DE plot set
 - MultiQC reports from expression, alignment, count, and alignment-QC modules
 - FastQC sample reports from expression outputs
 - Qualimap sample reports from alignment-QC outputs
-- ORA/GSEA result tables, dotplot source tables, and readable/original
-  enrichment dotplots
+- ORA/GSEA result tables, dotplot source tables, enrichment plot summaries,
+  readable/classic dotplots, ORA barplot, GSEA NES plot, and GSEA enrichment
+  curves when present
 
 When `--standard-out` is used and standard-flow has already collected
-DE/enrichment plots under `03_results/plots`, report-flow uses that top-level
-plot collection and avoids duplicating nested DE/enrichment plot copies.
+DE/enrichment plots under `03_results/plots`, `03_results/plots/png`, or
+`03_results/plots/pdf`, report-flow uses that top-level plot collection and
+avoids duplicating nested DE/enrichment plot copies.
 
 HTML reports are copied with the local asset directories required for offline
 viewing when the upstream tool writes a recognizable bundle. This keeps the
@@ -245,9 +251,10 @@ tables, collected plots, copied HTML report bundles, tool links, provenance,
 
 `tests/formal.sh` uses the central yeast SNF2 count matrix and GO gene-set
 bundle when available. It builds and runs `rnaseq-de-flow`, builds and runs
-`rnaseq-enrichment-flow`, then collects the real `de-out` and `enrichment-out`
-directories through `rnaseq-report-flow`. It checks the r2 plot gallery and
-embedded-report surface. The central data tree can be prepared
+`rnaseq-enrichment-flow` r3, then collects the real `de-out` and
+`enrichment-out` directories through `rnaseq-report-flow`. It checks the r3
+plot gallery, workflow diagrams, active navigation hooks, linked report surface,
+and deliverables section. The central data tree can be prepared
 with `repos/apps/bio/flows/rna-seq/test-data/yeast/rnaseq-yeast-get-data`;
 downstream formal tests read it via `TAFFISH_RNASEQ_TESTDATA` or the default
 local `test-data/yeast/data/03_results` path.

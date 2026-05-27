@@ -2,7 +2,7 @@
 name = "rnaseq-report-flow"
 kind = "flow"
 version = "0.1.0"
-release = 2
+release = 3
 license = "Apache-2.0"
 main = "src/main.taf"
 
@@ -20,7 +20,7 @@ command_mode = false
 domain = "bio"
 categories = ["rna-seq", "report", "workflow", "transcriptomics", "provenance"]
 keywords = ["rnaseq-report-flow", "rna-seq", "report", "summary", "provenance", "HTML", "transcriptomics"]
-description = "TAFFISH RNA-seq report flow that collects upstream RNA-seq flow outputs into a bilingual branded static HTML project report with workflow sections, summaries, plots, QC report links, tool links, methods, versions, commands, and provenance."
+description = "TAFFISH RNA-seq report flow that collects upstream RNA-seq flow outputs into a bilingual branded static HTML project report with workflow diagrams, active section navigation, organized plots, QC report links, tool links, methods, versions, commands, and provenance."
 
 [upstream]
 name = "rnaseq-report-flow"

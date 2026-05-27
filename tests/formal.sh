@@ -80,7 +80,7 @@ echo "[FORMAL] build rnaseq-enrichment-flow"
     taf check
     taf build
 )
-enrichment_flow_cmd="$enrichment_flow_dir/target/taf-rnaseq-enrichment-flow-v0.1.0-r2"
+enrichment_flow_cmd="$enrichment_flow_dir/target/taf-rnaseq-enrichment-flow-v0.1.0-r3"
 if [ ! -x "$enrichment_flow_cmd" ]; then
     echo "formal: built enrichment flow command is missing or not executable: $enrichment_flow_cmd" >&2
     exit 1
@@ -101,7 +101,7 @@ taf check
 echo "[FORMAL] taf build"
 taf build
 
-flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.1.0-r2"
+flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.1.0-r3"
 if [ ! -x "$flow_cmd" ]; then
     echo "formal: built report flow command is missing or not executable: $flow_cmd" >&2
     exit 1
@@ -210,14 +210,23 @@ grep -F 'Tools and Source Links' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F '工具与来源链接' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'Functional Enrichment' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F '功能富集' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'IntersectionObserver' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'workflow-map' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'Deliverables and Output Structure' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'ORA visual summary' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'GSEA directional summary' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'target="_blank" rel="noopener"' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'data:image/png;base64,' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'provided_modules	2' "$out/04_reports/project_summary.tsv" >/dev/null
-grep -F 'plot_groups	11' "$out/04_reports/project_summary.tsv" >/dev/null
-grep -F 'Collected plots	11' "$out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'plot_groups	14' "$out/04_reports/project_summary.tsv" >/dev/null
+grep -F 'Collected plots	14' "$out/04_reports/key_metrics.tsv" >/dev/null
 grep -F 'de	results' "$out/04_reports/collected_files.tsv" >/dev/null
 grep -F 'enrichment	ora_results' "$out/04_reports/collected_files.tsv" >/dev/null
 grep -F 'de	pca_plot	png' "$out/04_reports/plot_files.tsv" >/dev/null
 grep -F 'enrichment	dotplot_original' "$out/04_reports/plot_gallery.tsv" >/dev/null
+grep -F 'enrichment	ora_barplot' "$out/04_reports/plot_gallery.tsv" >/dev/null
+grep -F 'enrichment	gsea_nes_plot' "$out/04_reports/plot_gallery.tsv" >/dev/null
+grep -F 'enrichment	gsea_enrichment_curves' "$out/04_reports/plot_gallery.tsv" >/dev/null
 grep -F 'rnaseq-de-flow' "$out/04_reports/versions.tsv" >/dev/null
 grep -F 'rnaseq-enrichment-flow' "$out/04_reports/versions.tsv" >/dev/null
 grep -F 'rnaseq-de-flow' "$out/04_reports/tool_links.tsv" >/dev/null

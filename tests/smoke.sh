@@ -34,7 +34,7 @@ taf check
 echo "[SMOKE] taf build"
 taf build
 
-flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.1.0-r2"
+flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.1.0-r3"
 if [ ! -x "$flow_cmd" ]; then
     echo "smoke: built flow command is missing or not executable: $flow_cmd" >&2
     exit 1
@@ -215,9 +215,18 @@ printf 'PDF smoke\n' > "$enrichment_out/03_results/enrichment/dotplot.pdf"
 printf 'PNG smoke\n' > "$enrichment_out/03_results/enrichment/dotplot.png"
 printf 'PDF smoke\n' > "$enrichment_out/03_results/enrichment/dotplot.original.pdf"
 printf 'PNG smoke\n' > "$enrichment_out/03_results/enrichment/dotplot.original.png"
+for plot in ora_barplot gsea_nes_plot gsea_enrichment_curves
+do
+    printf 'PDF smoke\n' > "$enrichment_out/03_results/enrichment/$plot.pdf"
+    printf 'PNG smoke\n' > "$enrichment_out/03_results/enrichment/$plot.png"
+done
 cat > "$enrichment_out/03_results/enrichment/dotplot_source.tsv" <<'EOF'
 metric	value
 renderer	rnaseq-enrichment-flow
+EOF
+cat > "$enrichment_out/03_results/enrichment/plot_summary.tsv" <<'EOF'
+metric	value
+plot_style	r3-unified
 EOF
 
 echo "[SMOKE] rnaseq-report-flow tiny fixture"
@@ -273,18 +282,27 @@ grep -F 'Differential Expression' "$out/04_reports/rnaseq_report.html" >/dev/nul
 grep -F '差异表达' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'Functional Enrichment' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F '功能富集' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'IntersectionObserver' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'workflow-map' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'Deliverables and Output Structure' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F '交付文件与输出结构' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'ORA visual summary' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'GSEA directional summary' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'target="_blank" rel="noopener"' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'https://github.com/taffish' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'https://taffish.github.io/' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'data:image/png;base64,' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'provided_modules	6' "$out/04_reports/project_summary.tsv" >/dev/null
-grep -F 'plot_groups	11' "$out/04_reports/project_summary.tsv" >/dev/null
+grep -F 'plot_groups	14' "$out/04_reports/project_summary.tsv" >/dev/null
 grep -F 'html_report_links	6' "$out/04_reports/project_summary.tsv" >/dev/null
-grep -F 'Collected plots	11' "$out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'Collected plots	14' "$out/04_reports/key_metrics.tsv" >/dev/null
 grep -F 'Linked HTML reports	6' "$out/04_reports/key_metrics.tsv" >/dev/null
-grep -F 'rnaseq-report-flow	0.1.0-r2	taffish flow' "$out/04_reports/versions.tsv" >/dev/null
+grep -F 'rnaseq-report-flow	0.1.0-r3	taffish flow' "$out/04_reports/versions.tsv" >/dev/null
 grep -F 'rnaseq-de-flow' "$out/04_reports/versions.tsv" >/dev/null
 grep -F 'rnaseq-de-flow' "$out/04_reports/tool_links.tsv" >/dev/null
 grep -F 'https://github.com/taffish/rnaseq-de-flow' "$out/04_reports/tool_links.tsv" >/dev/null
 grep -F 'enrichment	ora_results' "$out/04_reports/collected_files.tsv" >/dev/null
+grep -F 'enrichment	plot_summary' "$out/04_reports/collected_files.tsv" >/dev/null
 grep -F 'expression	multiqc' "$out/04_reports/html_reports.tsv" >/dev/null
 grep -F 'alignment_qc	qualimap_S1' "$out/04_reports/html_reports.tsv" >/dev/null
 test -s "$out/03_results/collected_html/expression.multiqc/index.html"
@@ -292,6 +310,9 @@ test -s "$out/03_results/collected_html/alignment_qc.qualimap_S1/index.html"
 grep -F 'de	pca_plot' "$out/04_reports/collected_files.tsv" >/dev/null
 grep -F 'de	pca_plot	png' "$out/04_reports/plot_files.tsv" >/dev/null
 grep -F 'enrichment	dotplot_original' "$out/04_reports/plot_gallery.tsv" >/dev/null
+grep -F 'enrichment	ora_barplot' "$out/04_reports/plot_gallery.tsv" >/dev/null
+grep -F 'enrichment	gsea_nes_plot' "$out/04_reports/plot_gallery.tsv" >/dev/null
+grep -F 'enrichment	gsea_enrichment_curves' "$out/04_reports/plot_gallery.tsv" >/dev/null
 grep -F '"flow": "rnaseq-report-flow"' "$out/run.manifest.json" >/dev/null
 if command -v python3 >/dev/null 2>&1; then
     python3 -m json.tool "$out/run.manifest.json" >/dev/null
