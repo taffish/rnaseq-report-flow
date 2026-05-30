@@ -8,6 +8,7 @@ Bulk RNA-seq 测量一群细胞或组织中 RNA 分子的丰度。它不能直�
 
 - 这批 reads 的质量是否足够可靠？
 - reads 能否稳定分配到参考转录本、基因或基因组位置？
+- 如果没有参考基因组/注释，能否先组装出可用的转录本 feature 空间？
 - 样本之间是否可比，生物学重复是否一致？
 - 在给定实验设计和比较条件下，哪些基因表达发生变化？
 - 这些变化基因是否共同指向某些功能、通路或生物过程？
@@ -24,6 +25,17 @@ FASTQ reads
 -> differential expression
 -> enrichment
 -> biological hypotheses and reusable evidence
+```
+
+无参路线会在 QC 后先进入 assembly：
+
+```text
+FASTQ reads
+-> QC / trimming
+-> de novo transcriptome assembly
+-> transcript-level quantification
+-> optional homolog-derived annotation
+-> transcript-level or pseudo-gene-level downstream analysis
 ```
 
 报告中的每一节都应该放在这条证据链中理解。
@@ -110,6 +122,14 @@ Contrast 是模型中真正要问的问题，例如 `treated vs control`、`KO v
 
 主要证据包括 HISAT2 比对摘要、BAM 文件索引、featureCounts assignment、RSeQC 和 Qualimap 报告。它适合用于检查 mapping rate、gene body coverage、插入片段/文库质量、注释兼容性和 count-based 分析证据。
 
+### De novo assembly, expression, and annotation
+
+无参路线回答：在没有可信参考基因组/注释时，流程组装、定量和注释的是哪一套转录本 feature 空间。
+
+这条路线的核心边界是：组装得到的 transcript ID 默认不是已知基因 ID。`transcript_counts.tsv` 和 `transcript_tpm.tsv` 描述的是 assembled transcripts；只有上游显式提供 `tx2gene`、聚类映射或同源注释时，才可以进一步讨论 pseudo-gene、cluster 或 putative gene 层面的结果。
+
+主要证据包括 assembly summary、assembly stats、read support、可选 BUSCO summary、de novo expression summary、matrix semantics、protein hits、transcript annotation、ID mapping，以及 annotation-derived GMT/background。缺少蛋白数据库、GO mapping 或 GMT/background 时，富集应被标记为不可用，而不是假装存在。
+
 ### Differential expression
 
 差异表达模块回答：在选定设计模型和 contrast 下，哪些基因发生变化。
@@ -178,6 +198,20 @@ Feature counting 问的是：已经比对到基因组的片段，按当前注释
 Assignment summary 是这一层最重要的 QC 之一。如果 assigned fragments 比例过低，可能说明参考不匹配、链特异性设置错误、注释太旧、样本污染、rRNA/非编码 RNA 比例异常，或 reads 长度/类型不适合当前 counting 策略。
 
 正式报告中，count matrix 可以作为 DE 的输入证据，也可以和 Salmon gene counts 互相参照。但两者由不同模型产生，数值不必逐项一致；更重要的是它们是否在样本层面和主要生物学信号上相互支持。
+
+### De novo route：先构建词汇表，再解释表达
+
+无参 RNA-seq 的第一步不是把 reads 分配到已知 gene，而是从 reads 中构建一套项目自己的转录本词汇表。Trinity 或 rnaSPAdes 这样的组装器会根据 read overlap、k-mer 图和表达证据构造 transcript contig。这个 transcriptome assembly 在后续分析中承担了“参考转录组”的角色。
+
+从湿实验角度看，无参组装对 RNA 完整性、测序深度、read length、样本多样性和污染非常敏感。表达很低的 transcript 可能组装不完整，重复序列和高度相似 isoform 可能被合并或拆分，跨样本表达差异也可能影响最终 transcript 集合。因此 assembly stats 和 BUSCO 不是装饰指标，而是判断这套 feature 空间是否值得继续解释的基础。
+
+从生物学角度看，assembled transcript 是“在这批 reads 中被支持的转录本候选”。它可能对应一个已知基因、一个 isoform、一个 paralog 片段、一个未注释转录本，甚至一个组装 artifact。报告必须避免把 transcript ID 直接写成已知 gene ID。更稳妥的说法是 transcript-level evidence；只有当存在映射或聚类时，才说 pseudo-gene 或 cluster-level evidence；当存在同源命中时，才说 homolog-derived annotation。
+
+技术上，无参表达定量通常把组装 transcript FASTA 当作 reference transcriptome，再用 Salmon/Kallisto 类工具得到 transcript counts/TPM。若上游提供 `tx2gene` 或 cluster map，可以生成 gene-like 矩阵；否则差异分析和富集都应围绕 transcript ID 空间展开。`matrix_semantics.tsv` 的作用就是告诉读者当前矩阵到底是 transcript、pseudo-gene、cluster 还是 mapped-gene 空间。
+
+功能注释通常来自 ORF 预测和同源搜索。TransDecoder 预测可能的 coding sequence，DIAMOND/BLAST/MMseqs2 把 ORF 或 transcript 与蛋白数据库比对，GO 或 gene set 再由同源对象转移而来。这种注释是证据转移，不是人工 curated gene identity。数据库版本、物种距离、比对阈值和 GO mapping 质量都会影响结果。
+
+因此无参报告的阅读顺序应是：先看 assembly 是否完整和不过度碎片化，再看 expression matrix 的 feature-space 语义，再看 annotation 覆盖率和未注释比例，最后才考虑 DE 和 enrichment。若没有完整的 GMT/background，报告应清楚说明 enrichment unavailable，而不是强行给出不可靠的通路解释。
 
 ### Differential expression：把变异放进模型
 

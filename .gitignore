@@ -3,4 +3,8 @@
 *.lx64fsl
 .DS_Store
 release.md
+.taf-*/
+target/*
+!target/.gitkeep
+tests/report-guide-*.png
 tests/test-real-run-report*/

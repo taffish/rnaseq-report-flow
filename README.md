@@ -11,7 +11,7 @@ Package identity:
 - name: `rnaseq-report-flow`
 - command: `taf-rnaseq-report-flow`
 - kind: `flow`
-- version: `0.1.0-r4`
+- version: `0.2.0-r1`
 - license: Apache-2.0
 
 ## RNA-seq Flow Position
@@ -24,7 +24,7 @@ collector rather than duplicate report assembly.
 
 ## Scope
 
-r4 supports enhanced static report collection from a completed
+0.2.0-r1 supports enhanced static report collection from a completed
 `rnaseq-standard-flow` output directory or any combination of these upstream
 RNA-seq flow output directories:
 
@@ -35,21 +35,32 @@ RNA-seq flow output directories:
 - `rnaseq-alignment-qc-flow`
 - `rnaseq-de-flow`
 - `rnaseq-enrichment-flow`
+- `rnaseq-denovo-assembly-flow`
+- `rnaseq-denovo-expression-flow`
+- `rnaseq-denovo-annotation-flow`
 
 At least `--standard-out` or one upstream output directory is required. All
 input directories are read-only. The report flow writes only to its own
 `--outdir`.
 
-r4 deliberately does not rerun Salmon, Kallisto, HISAT2, samtools,
-featureCounts, RSeQC, Qualimap, DESeq2, ORA, GSEA, MultiQC, or RMarkdown. It
-does not download references, gene sets, or databases. It does not perform
-project-specific biological interpretation beyond organizing the upstream flow
-outputs into bilingual, workflow-oriented sections with plain-language context
-and a companion RNA-seq primer / interpretation guide.
+0.2.0-r1 is backward-compatible with the existing reference-route report contract: existing commands that
+only pass `--standard-out`, reference-route outputs, DE outputs, or enrichment
+outputs continue to work unchanged. The new de novo options are additive and
+only affect the report when those upstream directories are supplied or
+auto-discovered under `--standard-out`.
+
+0.2.0-r1 deliberately does not rerun Salmon, Kallisto, HISAT2, samtools,
+featureCounts, RSeQC, Qualimap, Trinity, rnaSPAdes, seqkit, BUSCO,
+TransDecoder, DIAMOND, DESeq2, ORA, GSEA, MultiQC, or RMarkdown. It does not
+download references, gene sets, protein databases, GO mappings, or other online
+resources. It does not perform project-specific biological interpretation
+beyond organizing the upstream flow outputs into bilingual, workflow-oriented
+sections with plain-language context and a companion RNA-seq primer /
+interpretation guide.
 
 ## Dependencies
 
-r4 has no additional TAFFISH tool dependencies. It is a self-contained static
+0.2.0-r1 has no additional TAFFISH tool dependencies. It is a self-contained static
 collector implemented with the TAFFISH flow shell runtime and ordinary POSIX
 utilities such as `awk`, `sed`, `cp`, `mkdir`, `date`, and `wc`.
 
@@ -99,6 +110,17 @@ taf-rnaseq-report-flow \
   --outdir report-out
 ```
 
+Collect a no-reference/de novo route:
+
+```sh
+taf-rnaseq-report-flow \
+  --denovo-assembly-out denovo-assembly-out \
+  --denovo-expression-out denovo-expression-out \
+  --denovo-annotation-out denovo-annotation-out \
+  --project-name "No-reference RNA-seq" \
+  --outdir report-out
+```
+
 ## Parameters
 
 Required:
@@ -109,11 +131,14 @@ Required:
 
 Optional upstream outputs:
 
-- `--standard-out PATH`: completed `rnaseq-standard-flow` output directory. r4
+- `--standard-out PATH`: completed `rnaseq-standard-flow` output directory. 0.2.0-r1
   auto-discovers nested `03_results/reference`, `expression`, `alignment`,
-  `count`, `alignment_qc`, `de`, and `enrichment` blocks when present, and
+  `count`, `alignment_qc`, `de`, `enrichment`, `denovo_assembly`,
+  `denovo_expression`, and `denovo_annotation` blocks when present, and
   consumes the standard-flow top-level `03_results/plots`, `03_results/plots/png`,
-  and `03_results/plots/pdf` plot collections when available.
+  and `03_results/plots/pdf` plot collections when available. Hyphenated
+  de novo result directory names, such as `03_results/denovo-assembly`, are
+  also recognized for compatibility with draft outputs.
 - `--reference-out PATH`: output from `rnaseq-index-flow`.
 - `--expression-out PATH`: output from `rnaseq-expression-flow`.
 - `--alignment-out PATH`: output from `rnaseq-alignment-flow`.
@@ -121,10 +146,36 @@ Optional upstream outputs:
 - `--alignment-qc-out PATH`: output from `rnaseq-alignment-qc-flow`.
 - `--de-out PATH`: output from `rnaseq-de-flow`.
 - `--enrichment-out PATH`: output from `rnaseq-enrichment-flow`.
+- `--denovo-assembly-out PATH`: output from `rnaseq-denovo-assembly-flow`.
+  The report collects assembly summaries, assembly statistics, read support,
+  optional BUSCO status, versions, methods, commands, manifest, and HTML
+  bundles when present.
+- `--denovo-expression-out PATH`: output from `rnaseq-denovo-expression-flow`.
+  The report collects transcript count/TPM matrices, optional gene or
+  pseudo-gene matrices, quant indexes, mapping summaries, matrix semantics,
+  transcript statistics, QC/report HTML bundles, versions, methods, commands,
+  and manifest when present.
+- `--denovo-annotation-out PATH`: output from `rnaseq-denovo-annotation-flow`.
+  The report collects annotation summaries, protein hits, transcript
+  annotation, optional ID mapping, annotation-derived `denovo_go.gmt`,
+  `denovo_background.tsv`, versions, methods, commands, and manifest when
+  present.
 
 Other options:
 
 - `--project-name TEXT`: report title. Default: `RNA-seq project`.
+- `--analysis-mode auto|reference|denovo|mixed`: analysis mode shown in the
+  report overview. Default: `auto`. `rnaseq-standard-flow` passes this
+  explicitly so the overview distinguishes genome-guided and no-reference
+  transcriptome routes even before top-level standard-flow summaries are
+  finalized.
+- `--analysis-route auto|salmon|both|none|unknown`: standard-flow route shown
+  in key metrics. Default: `auto`. `rnaseq-standard-flow` passes this
+  explicitly so the report does not depend on a top-level summary file that is
+  written after the report step.
+- `--de-source auto|salmon|featurecounts|none|unknown`: DE count source shown
+  in key metrics. Default: `auto`. Use `salmon` for Salmon/tximport counts or
+  `featurecounts` for the optional reference alignment/count route.
 - `--force`: replace the standard rnaseq-report-flow output files inside an
   existing output directory.
 
@@ -193,7 +244,7 @@ Important files:
 
 ## Report Structure
 
-The main HTML is not a single figure dump. r4 uses a modern static layout with
+The main HTML is not a single figure dump. 0.2.0-r1 uses a modern static layout with
 a sticky sidebar, scroll-aware active section highlight, language switch,
 static workflow diagrams, project-level metric cards, section-specific plot
 cards, an interpretation-guide entry, a deliverables section, and compact table
@@ -213,6 +264,10 @@ previews. It organizes content by biological workflow meaning:
   summaries, and expression matrices.
 - Alignment, counting, and RNA-seq QC: BAM maps, featureCounts summaries,
   RSeQC/Qualimap/MultiQC links, and optional alignment-route evidence.
+- De novo assembly, expression, and annotation: assembly quality, transcript
+  feature-space metrics, optional BUSCO status, transcript-level expression
+  matrices, matrix semantics, homolog-derived annotation, and enrichment
+  readiness when those no-reference outputs are supplied.
 - Differential expression: PCA, sample correlation, expression distributions,
   MA/volcano plots, DEG counts, heatmap, top-gene expression, and DESeq2 tables.
 - Functional enrichment: ORA/GSEA summaries, readable/classic enrichment
@@ -233,10 +288,10 @@ HTML remains portable. The source copy is kept in `assets/taffish-logo.png`.
 The HTML stores both English and Chinese text internally, but only the selected
 language is visible at a time.
 
-r4 fixes the workflow-diagram language toggle so English pages do not show
-Chinese helper text in flow cards. It also checks the generated HTML for the
+0.2.0-r1 keeps the language-toggle and encoding fixes: English pages do not show
+Chinese helper text in flow cards, and generated HTML is checked for the
 specific UTF-8/Latin-1 mojibake pattern that can appear on non-UTF-8 server
-locales and repairs that report HTML automatically with `iconv` when needed.
+locales. When `iconv` is available, that report HTML is repaired automatically.
 
 ## Collected Content
 
@@ -255,6 +310,16 @@ when present. Examples include:
 - ORA/GSEA result tables, dotplot source tables, enrichment plot summaries,
   readable/classic dotplots, ORA barplot, GSEA NES plot, and GSEA enrichment
   curves when present
+- de novo assembly summaries, assembly statistics, seqkit statistics,
+  read-support tables, optional BUSCO summaries, and assembly HTML reports
+- de novo expression summaries, quant file indexes, matrix semantics,
+  mapping summaries, transcript statistics, transcript count/TPM matrices,
+  optional gene or pseudo-gene matrices, and expression QC/report HTML bundles
+- de novo key metrics that spell out transcript-level-only matrices when no
+  explicit tx2gene or cluster mapping was supplied
+- de novo annotation summaries, annotation input records, protein hits,
+  transcript annotation, optional ID mapping, annotation-derived GMT, and
+  annotation-derived background genes
 
 When `--standard-out` is used and standard-flow has already collected
 DE/enrichment plots under `03_results/plots`, `03_results/plots/png`, or
@@ -270,16 +335,18 @@ reports.
 
 `tests/smoke.sh` builds the report flow and runs it on tiny synthetic upstream
 output directories. It checks enhanced HTML report generation, collected
-tables, collected plots, copied HTML report bundles, tool links, provenance,
-language-toggle CSS, C-locale rendering, mojibake absence, `--force`, and
-output-directory cleanliness.
+tables, collected plots, copied HTML report bundles, de novo assembly/
+expression/annotation collection, de novo report sections, tool links,
+provenance, language-toggle CSS, C-locale rendering, mojibake absence,
+`--force`, and output-directory cleanliness.
 
 `tests/formal.sh` uses the central yeast SNF2 count matrix and GO gene-set
 bundle when available. It builds and runs `rnaseq-de-flow`, builds and runs
 `rnaseq-enrichment-flow` r3, then collects the real `de-out` and
-`enrichment-out` directories through `rnaseq-report-flow`. It checks the r4
+`enrichment-out` directories through `rnaseq-report-flow`. It checks the 0.2.0-r1
 plot gallery, workflow diagrams, active navigation hooks, linked report surface,
-language-toggle CSS, mojibake absence, and deliverables section. The central data tree can be prepared
-with `repos/apps/bio/flows/rna-seq/test-data/yeast/rnaseq-yeast-get-data`;
+language-toggle CSS, mojibake absence, and deliverables section. The central
+data tree can be prepared with
+`repos/apps/bio/flows/rna-seq/test-data/yeast/rnaseq-yeast-get-data`;
 downstream formal tests read it via `TAFFISH_RNASEQ_TESTDATA` or the default
 local `test-data/yeast/data/03_results` path.

@@ -111,7 +111,7 @@ taf check
 echo "[FORMAL] taf build"
 taf build
 
-flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.1.0-r4"
+flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.2.0-r1"
 if [ ! -x "$flow_cmd" ]; then
     echo "formal: built report flow command is missing or not executable: $flow_cmd" >&2
     exit 1
@@ -273,6 +273,7 @@ grep -F '常见误读' "$out/04_reports/report_interpretation.html" >/dev/null
 grep -F 'rnaseq_report.html' "$out/04_reports/report_interpretation.html" >/dev/null
 assert_no_mojibake "$out/04_reports/report_interpretation.html"
 grep -F 'provided_modules	2' "$out/04_reports/project_summary.tsv" >/dev/null
+grep -F 'denovo_present	no' "$out/04_reports/project_summary.tsv" >/dev/null
 grep -F 'plot_groups	14' "$out/04_reports/project_summary.tsv" >/dev/null
 grep -F 'Collected plots	14' "$out/04_reports/key_metrics.tsv" >/dev/null
 grep -F 'de	results' "$out/04_reports/collected_files.tsv" >/dev/null

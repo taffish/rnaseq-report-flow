@@ -1,8 +1,8 @@
 [package]
 name = "rnaseq-report-flow"
 kind = "flow"
-version = "0.1.0"
-release = 4
+version = "0.2.0"
+release = 1
 license = "Apache-2.0"
 main = "src/main.taf"
 
@@ -19,13 +19,13 @@ command_mode = false
 [meta]
 domain = "bio"
 categories = ["rna-seq", "report", "workflow", "transcriptomics", "provenance"]
-keywords = ["rnaseq-report-flow", "rna-seq", "report", "summary", "provenance", "HTML", "transcriptomics", "interpretation"]
-description = "TAFFISH RNA-seq report flow that collects upstream RNA-seq flow outputs into a bilingual branded static HTML project report with workflow diagrams, active section navigation, organized plots, QC report links, tool links, methods, versions, commands, provenance, and an offline RNA-seq primer."
+keywords = ["rnaseq-report-flow", "rna-seq", "report", "summary", "provenance", "HTML", "transcriptomics", "interpretation", "de-novo"]
+description = "TAFFISH RNA-seq report flow that collects upstream reference or de novo RNA-seq flow outputs into a bilingual branded static HTML project report with workflow diagrams, active section navigation, organized plots, QC report links, tool links, methods, versions, commands, provenance, and an offline RNA-seq primer."
 
 [upstream]
 name = "rnaseq-report-flow"
 type = "taffish-flow"
 homepage = "https://github.com/taffish/rnaseq-report-flow"
-version = "0.1.0"
+version = "0.2.0"
 license = "Apache-2.0"
-description = "TAFFISH-maintained RNA-seq bilingual branded static report collector for versioned upstream RNA-seq flow outputs."
+description = "TAFFISH-maintained RNA-seq bilingual branded static report collector for versioned reference and de novo upstream RNA-seq flow outputs."

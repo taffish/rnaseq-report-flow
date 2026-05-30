@@ -1,4 +1,4 @@
-rnaseq-report-flow 0.1.0-r4
+rnaseq-report-flow 0.2.0-r1
 
 Purpose:
   Collect outputs from upstream TAFFISH RNA-seq subflows or a completed
@@ -12,6 +12,12 @@ Flow family role:
   This is the report-layer TAFFISH RNA-seq subflow. It can be run directly to
   collect compatible upstream outputs, and it is intended to be the final
   reporting step of rnaseq-standard-flow orchestration.
+
+Compatibility:
+  0.2.0-r1 preserves the existing reference-route report contract. Existing rnaseq-standard-flow outputs
+  and existing reference-route report commands continue to work unchanged.
+  New 0.2.0-r1 options only add de novo assembly/expression/annotation report
+  collection when those directories are supplied or auto-discovered.
 
 Usage:
   taf-rnaseq-report-flow \
@@ -34,6 +40,13 @@ Usage:
     --enrichment-out enrichment-out \
     --outdir report-out
 
+  taf-rnaseq-report-flow \
+    --denovo-assembly-out denovo-assembly-out \
+    --denovo-expression-out denovo-expression-out \
+    --denovo-annotation-out denovo-annotation-out \
+    --project-name "No-reference RNA-seq" \
+    --outdir report-out
+
 Required output:
   --outdir PATH, -o PATH
       Output directory. The flow refuses to run if PATH already exists unless
@@ -43,12 +56,14 @@ Required input:
   Provide --standard-out or at least one upstream output directory:
 
   --standard-out PATH
-      Completed rnaseq-standard-flow output directory. r4 auto-discovers
-      reference, expression, alignment, count, alignment_qc, de, and
-      enrichment blocks under PATH/03_results/ when present. It also consumes
-      standard-flow top-level plot collections under PATH/03_results/plots,
-      PATH/03_results/plots/png, and PATH/03_results/plots/pdf when available.
+      Completed rnaseq-standard-flow output directory. 0.2.0-r1 auto-discovers
+      reference, expression, alignment, count, alignment_qc, de, enrichment,
+      denovo_assembly, denovo_expression, and denovo_annotation blocks under
+      PATH/03_results/ when present. It also consumes standard-flow top-level
+      plot collections under PATH/03_results/plots, PATH/03_results/plots/png,
+      and PATH/03_results/plots/pdf when available.
 
+Reference-route upstream outputs:
   --reference-out PATH
       Output directory from rnaseq-index-flow.
 
@@ -70,9 +85,47 @@ Required input:
   --enrichment-out PATH
       Output directory from rnaseq-enrichment-flow.
 
+De novo upstream outputs:
+  --denovo-assembly-out PATH
+      Output directory from rnaseq-denovo-assembly-flow. 0.2.0-r1 collects assembly
+      summaries, assembly statistics, read-support tables, optional BUSCO
+      status, versions, methods, commands, manifest, and report HTML bundles
+      when present.
+
+  --denovo-expression-out PATH
+      Output directory from rnaseq-denovo-expression-flow. 0.2.0-r1 collects
+      transcript-level count/TPM matrices, optional gene or pseudo-gene
+      matrices, quant file indexes, mapping summaries, matrix semantics,
+      transcript statistics, QC/report HTML bundles, versions, methods,
+      commands, and manifest when present.
+
+  --denovo-annotation-out PATH
+      Output directory from rnaseq-denovo-annotation-flow. 0.2.0-r1 collects
+      annotation summaries, protein hits, transcript annotation, optional ID
+      mapping, annotation-derived denovo_go.gmt, denovo_background.tsv,
+      versions, methods, commands, and manifest when present.
+
 Other options:
   --project-name TEXT
       Report title. Default: RNA-seq project.
+
+  --analysis-mode auto|reference|denovo|mixed
+      Analysis mode shown in the report overview. Default: auto. Use
+      reference for genome-guided RNA-seq, denovo for no-reference
+      transcriptome assembly routes, or mixed when intentionally collecting
+      both evidence spaces. rnaseq-standard-flow passes this explicitly.
+
+  --analysis-route auto|salmon|both|none|unknown
+      Standard-flow route shown in key metrics. Default: auto. Use salmon for
+      the lightweight quantification route or both when reference mode also
+      includes alignment/count evidence. rnaseq-standard-flow passes this
+      explicitly before its final top-level summary is complete.
+
+  --de-source auto|salmon|featurecounts|none|unknown
+      Differential-expression count source shown in key metrics. Default:
+      auto. Use salmon for Salmon/tximport counts or featurecounts for the
+      optional reference alignment/count branch. rnaseq-standard-flow passes
+      this explicitly.
 
   --force
       Replace standard rnaseq-report-flow outputs inside an existing outdir.
@@ -101,7 +154,7 @@ Output tree:
   <outdir>/run.manifest.json
 
 Report contents:
-  r4 renders a branded TAFFISH HTML report with the real TAFFISH logo embedded
+  0.2.0-r1 renders a branded TAFFISH HTML report with the real TAFFISH logo embedded
   in the HTML, one-click English/Chinese switching, overview metrics, module
   status, workflow-oriented biological sections, static workflow diagrams,
   active sidebar section highlighting while scrolling, embedded PNG figures,
@@ -111,12 +164,21 @@ Report contents:
   deliverables/output-structure summaries, version records, and provenance
   pointers.
 
+  When de novo outputs are supplied, 0.2.0-r1 adds a no-reference branch covering
+  assembly quality, transcript-level expression semantics, functional
+  annotation, and enrichment readiness. It keeps the boundary explicit:
+  assembled transcript IDs are transcript features; gene-like or pseudo-gene
+  matrices require an explicit mapping or clustering table. When no mapping is
+  supplied, key metrics report transcript-level-only matrices rather than a
+  vague "none" matrix space. Annotation is homolog-derived evidence controlled
+  by the supplied protein/GO resources.
+
   Figures are placed in the sections where they are biologically meaningful:
-  reference preparation, read QC and expression quantification, alignment and
-  counting QC, differential expression, and functional enrichment. The main
-  report is therefore a guided project report rather than a single collected
-  figure gallery. The HTML keeps both languages internally, but only one
-  language is visible at a time.
+  reference preparation, read QC and expression quantification, optional
+  alignment and counting QC, optional de novo assembly/expression/annotation,
+  differential expression, and functional enrichment. The main report is a
+  guided project report rather than a single collected figure gallery. The HTML
+  keeps both languages internally, but only one language is visible at a time.
 
   Functional enrichment figures include readable/classic dotplots and, when
   produced by rnaseq-enrichment-flow r3, ORA top-term barplot, GSEA NES plot,
@@ -125,38 +187,30 @@ Report contents:
 Interpretation guide:
   <outdir>/04_reports/report_interpretation.html is generated beside the main
   report. It is a compact RNA-seq primer and report guide: RNA-seq basics,
-  experimental design, recommended reading order, module-level biological
-  questions, sticky left-side contents, scroll-aware section highlighting,
-  long-form step chapters from wet-lab origin to biological and technical
-  interpretation, common statistics, common plot interpretation, ORA/GSEA
-  boundaries, beginner FAQ, reusable files, and common misinterpretations. It
-  is static and offline like the main report.
+  experimental design, reference and de novo route interpretation, recommended
+  reading order, module-level biological questions, sticky left-side contents,
+  scroll-aware section highlighting, long-form step chapters from wet-lab
+  origin to biological and technical interpretation, common statistics, common
+  plot interpretation, ORA/GSEA boundaries, beginner FAQ, reusable files, and
+  common misinterpretations. It is static and offline like the main report.
 
 Detailed manuals:
   https://github.com/taffish/rnaseq-report-flow/blob/main/docs/report-interpretation.zh.md
   https://github.com/taffish/rnaseq-report-flow/blob/main/docs/report-interpretation.en.md
 
-  r4 fixes a language-toggle edge case in workflow diagrams, performs a
-  post-render check for UTF-8/Latin-1 Chinese mojibake in generated HTML, and
-  repairs that specific encoding failure automatically when iconv is available.
-
-  When a completed rnaseq-standard-flow output is supplied, the report uses
-  its standardized DE/enrichment PDF and PNG plot collection when available,
-  including split png/pdf subdirectories, avoiding duplicate plot copies from
-  the nested subflow directories.
-
 Dependencies:
-  r4 has no additional TAFFISH tool dependency. It is a static collector using
+  0.2.0-r1 has no additional TAFFISH tool dependency. It is a static collector using
   shell utilities only. Upstream analysis dependencies are recorded from the
   upstream flow outputs.
 
 Boundaries:
-  r4 does not rerun Salmon, Kallisto, HISAT2, samtools, featureCounts, RSeQC,
-  Qualimap, DESeq2, enrichment, MultiQC, or RMarkdown. It does not download
-  references, gene sets, or databases. It provides bilingual context for
-  interpreting workflow modules, but it does not make project-specific
-  biological conclusions. Manuscript figures should usually be regenerated from
-  the output tables with project-specific styling.
+  0.2.0-r1 does not rerun Salmon, Kallisto, HISAT2, samtools, featureCounts, RSeQC,
+  Qualimap, Trinity, rnaSPAdes, seqkit, BUSCO, TransDecoder, DIAMOND, DESeq2,
+  enrichment, MultiQC, or RMarkdown. It does not download references, gene
+  sets, protein databases, GO mappings, or other online resources. It provides
+  bilingual context for interpreting workflow modules, but it does not make
+  project-specific biological conclusions. Manuscript figures should usually
+  be regenerated from the output tables with project-specific styling.
 
 Wrapper options:
   -h, --help       Show this help.

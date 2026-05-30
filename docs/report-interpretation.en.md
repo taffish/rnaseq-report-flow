@@ -8,6 +8,8 @@ Bulk RNA-seq measures RNA abundance from a population of cells or tissue. It doe
 
 - Are the reads reliable enough for downstream analysis?
 - Can reads be assigned consistently to transcripts, genes, or genome positions?
+- If no reliable reference genome or annotation exists, can a usable transcript
+  feature space be assembled first?
 - Are samples comparable, and are biological replicates consistent?
 - Under the selected design and contrast, which genes changed?
 - Do changed genes point to coherent functions, pathways, or biological processes?
@@ -24,6 +26,17 @@ FASTQ reads
 -> differential expression
 -> enrichment
 -> biological hypotheses and reusable evidence
+```
+
+The no-reference route inserts assembly after QC:
+
+```text
+FASTQ reads
+-> QC / trimming
+-> de novo transcriptome assembly
+-> transcript-level quantification
+-> optional homolog-derived annotation
+-> transcript-level or pseudo-gene-level downstream analysis
 ```
 
 Each report section should be interpreted within this chain.
@@ -110,6 +123,25 @@ This optional genome-aware evidence branch asks whether the reads are compatible
 
 Main evidence includes HISAT2 summaries, BAM file indexes, featureCounts assignment, RSeQC, and Qualimap reports. It is useful for mapping rate, gene body coverage, library quality, annotation compatibility, and count-based evidence.
 
+### De novo Assembly, Expression, and Annotation
+
+The no-reference route asks which transcript feature space was assembled,
+quantified, and annotated when no trusted genome/annotation package is
+available.
+
+The central boundary is that assembled transcript IDs are not automatically
+known gene IDs. `transcript_counts.tsv` and `transcript_tpm.tsv` describe
+assembled transcript features. Gene-like or pseudo-gene-level results are only
+meaningful when an upstream `tx2gene`, cluster map, or homolog-derived mapping
+was supplied explicitly.
+
+Main evidence includes assembly summaries, assembly statistics, read support,
+optional BUSCO summaries, de novo expression summaries, matrix semantics,
+protein hits, transcript annotation, ID mapping, and annotation-derived
+GMT/background files. Missing protein databases, GO mappings, or GMT/background
+resources should be reported as unavailable evidence rather than hidden or
+treated as report failures.
+
 ### Differential Expression
 
 This module asks which genes changed under the selected model and contrast.
@@ -178,6 +210,50 @@ Biologically, a gene-level count matrix is a summary of transcriptional evidence
 Assignment summaries are one of the most important QC outputs at this layer. A low assigned-fragment fraction may indicate reference mismatch, wrong strandedness, old annotation, contamination, unusual rRNA/noncoding RNA content, or a library type that does not fit the counting model.
 
 The featureCounts matrix can be used as DE evidence and can also be compared with Salmon gene counts. The two sources are produced by different models, so values do not need to match one by one. The stronger question is whether they support the same sample-level structure and major biological signal.
+
+### De novo Route: Build the Vocabulary Before Interpreting Expression
+
+The first step of no-reference RNA-seq is not assigning reads to known genes. It
+is building a project-specific transcript vocabulary from the reads. Assemblers
+such as Trinity or rnaSPAdes use read overlap, k-mer graphs, and expression
+evidence to produce transcript contigs. This assembled transcriptome becomes
+the reference-like object for downstream analysis.
+
+From the wet-lab side, de novo assembly is sensitive to RNA integrity,
+sequencing depth, read length, sample diversity, and contamination. Lowly
+expressed transcripts may be incomplete. Repetitive regions and very similar
+isoforms may be merged or split. Condition-specific expression can affect which
+transcripts are recoverable. Assembly statistics and BUSCO summaries are
+therefore not decorative: they help judge whether the feature space is credible
+enough for expression analysis.
+
+Biologically, an assembled transcript is a candidate transcript supported by
+the current reads. It may correspond to a known gene, an isoform, a paralog
+fragment, a novel transcript, or an assembly artifact. A report should avoid
+calling transcript IDs known genes by default. Safer wording is
+transcript-level evidence; pseudo-gene or cluster-level evidence when a mapping
+exists; homolog-derived annotation when a protein or GO resource supports it.
+
+Technically, de novo expression quantification usually treats the assembled
+transcript FASTA as the reference transcriptome and estimates transcript counts
+and TPM values. If an upstream `tx2gene` table or cluster map is available,
+gene-like matrices can be produced. Otherwise DE and enrichment should remain
+in transcript ID space. The role of `matrix_semantics.tsv` is to tell readers
+whether the matrix is transcript, pseudo-gene, cluster, or mapped-gene space.
+
+Functional annotation is usually transferred from ORF prediction and homology
+search. TransDecoder predicts candidate coding sequences. DIAMOND, BLAST, or
+MMseqs2 compares those sequences with a protein database. GO terms or gene sets
+are then transferred through homologs. This is evidence transfer, not curated
+reference gene identity. Database version, phylogenetic distance, alignment
+thresholds, and GO mapping quality all affect interpretation.
+
+The recommended reading order for a no-reference report is therefore:
+assembly completeness and fragmentation first, expression matrix semantics
+second, annotation coverage and unannotated fraction third, and DE/enrichment
+only after those boundaries are clear. If a complete GMT/background pair is not
+available in the same feature ID space, enrichment should be marked unavailable
+rather than forced into an unreliable pathway story.
 
 ### Differential Expression: Variation Becomes a Model
 

@@ -34,7 +34,7 @@ taf check
 echo "[SMOKE] taf build"
 taf build
 
-flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.1.0-r4"
+flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.2.0-r1"
 if [ ! -x "$flow_cmd" ]; then
     echo "smoke: built flow command is missing or not executable: $flow_cmd" >&2
     exit 1
@@ -239,6 +239,138 @@ metric	value
 plot_style	r3-unified
 EOF
 
+denovo_assembly_out="$run_dir/denovo-assembly-out"
+make_common_reports "$denovo_assembly_out" "rnaseq-denovo-assembly-flow"
+mkdir -p "$denovo_assembly_out/03_results/assembly_qc" "$denovo_assembly_out/04_reports/multiqc_report_data"
+cat > "$denovo_assembly_out/04_reports/flow_summary.tsv" <<'EOF'
+metric	value
+flow	rnaseq-denovo-assembly-flow
+filtered_transcripts	42
+filtered_n50	1200
+busco_status	complete
+EOF
+cat > "$denovo_assembly_out/04_reports/assembly_summary.tsv" <<'EOF'
+metric	value
+filtered_transcripts	42
+filtered_n50	1200
+EOF
+cat > "$denovo_assembly_out/03_results/assembly_qc/assembly_stats.tsv" <<'EOF'
+metric	value
+transcripts	42
+n50	1200
+EOF
+cat > "$denovo_assembly_out/03_results/assembly_qc/seqkit_stats.tsv" <<'EOF'
+file	num_seqs	sum_len	min_len	avg_len	max_len
+transcripts.fa	42	12000	250	600	1800
+EOF
+cat > "$denovo_assembly_out/03_results/assembly_qc/read_support.tsv" <<'EOF'
+sample_id	mapped_reads
+S1	1000
+EOF
+cat > "$denovo_assembly_out/03_results/assembly_qc/busco_summary.tsv" <<'EOF'
+metric	value
+complete	95.0
+EOF
+cat > "$denovo_assembly_out/04_reports/multiqc_report.html" <<'EOF'
+<!doctype html><html><body><h1>denovo assembly MultiQC</h1></body></html>
+EOF
+
+denovo_expression_out="$run_dir/denovo-expression-out"
+make_common_reports "$denovo_expression_out" "rnaseq-denovo-expression-flow"
+mkdir -p "$denovo_expression_out/03_results/matrices" "$denovo_expression_out/04_reports/multiqc_report_data" "$denovo_expression_out/03_results/fastqc/S1"
+cat > "$denovo_expression_out/04_reports/flow_summary.tsv" <<'EOF'
+metric	value
+flow	rnaseq-denovo-expression-flow
+transcript_rows	42
+gene_rows	10
+EOF
+cat > "$denovo_expression_out/04_reports/expression_summary.tsv" <<'EOF'
+metric	value
+transcript_rows	42
+gene_rows	10
+EOF
+cat > "$denovo_expression_out/04_reports/quant_files.tsv" <<'EOF'
+sample_id	quant_file
+S1	salmon/S1/quant.sf
+EOF
+cat > "$denovo_expression_out/04_reports/matrix_semantics.tsv" <<'EOF'
+matrix	feature_space	description
+transcript_counts	transcript	assembled transcript features
+gene_counts	pseudo_gene	clustered transcript groups
+EOF
+cat > "$denovo_expression_out/04_reports/mapping_summary.tsv" <<'EOF'
+metric	value
+mapping_mode	cluster
+EOF
+cat > "$denovo_expression_out/04_reports/transcript_stats.tsv" <<'EOF'
+metric	value
+transcripts	42
+EOF
+cat > "$denovo_expression_out/03_results/matrices/transcript_counts.tsv" <<'EOF'
+transcript_id	S1	S2
+TRINITY_DN1_c0_g1_i1	10	12
+EOF
+cat > "$denovo_expression_out/03_results/matrices/transcript_tpm.tsv" <<'EOF'
+transcript_id	S1	S2
+TRINITY_DN1_c0_g1_i1	50	60
+EOF
+cat > "$denovo_expression_out/03_results/matrices/gene_counts.tsv" <<'EOF'
+gene_id	S1	S2
+cluster_1	10	12
+EOF
+cat > "$denovo_expression_out/03_results/matrices/gene_tpm.tsv" <<'EOF'
+gene_id	S1	S2
+cluster_1	50	60
+EOF
+cat > "$denovo_expression_out/04_reports/multiqc_report.html" <<'EOF'
+<!doctype html><html><body><h1>denovo expression MultiQC</h1></body></html>
+EOF
+cat > "$denovo_expression_out/03_results/fastqc/S1/S1_fastqc.html" <<'EOF'
+<!doctype html><html><body><h1>denovo S1 FastQC</h1></body></html>
+EOF
+
+denovo_annotation_out="$run_dir/denovo-annotation-out"
+make_common_reports "$denovo_annotation_out" "rnaseq-denovo-annotation-flow"
+mkdir -p "$denovo_annotation_out/00_inputs" "$denovo_annotation_out/03_results/annotation" "$denovo_annotation_out/03_results/gene_sets"
+cat > "$denovo_annotation_out/04_reports/flow_summary.tsv" <<'EOF'
+metric	value
+flow	rnaseq-denovo-annotation-flow
+annotated_transcript_count	30
+gene_set_count	8
+EOF
+cat > "$denovo_annotation_out/04_reports/annotation_summary.tsv" <<'EOF'
+metric	value
+annotated_transcript_count	30
+gene_set_count	8
+EOF
+cat > "$denovo_annotation_out/04_reports/transcript_stats.tsv" <<'EOF'
+metric	value
+transcripts	42
+EOF
+cat > "$denovo_annotation_out/00_inputs/annotation_inputs.tsv" <<'EOF'
+input	path
+protein_db	proteins.fa
+EOF
+cat > "$denovo_annotation_out/03_results/annotation/protein_hits.tsv" <<'EOF'
+transcript_id	protein_id	evalue
+TRINITY_DN1_c0_g1_i1	P12345	1e-30
+EOF
+cat > "$denovo_annotation_out/03_results/annotation/transcript_annotation.tsv" <<'EOF'
+transcript_id	best_hit	description
+TRINITY_DN1_c0_g1_i1	P12345	ribosomal protein
+EOF
+cat > "$denovo_annotation_out/03_results/annotation/id_mapping.tsv" <<'EOF'
+transcript_id	gene_set_id
+TRINITY_DN1_c0_g1_i1	GO:0006412
+EOF
+cat > "$denovo_annotation_out/03_results/gene_sets/denovo_go.gmt" <<'EOF'
+GO:0006412	translation	TRINITY_DN1_c0_g1_i1
+EOF
+cat > "$denovo_annotation_out/03_results/gene_sets/denovo_background.tsv" <<'EOF'
+feature_id
+TRINITY_DN1_c0_g1_i1
+EOF
+
 echo "[SMOKE] rnaseq-report-flow tiny fixture"
 (
     cd "$run_dir"
@@ -352,7 +484,8 @@ grep -F 'plot_groups	14' "$out/04_reports/project_summary.tsv" >/dev/null
 grep -F 'html_report_links	6' "$out/04_reports/project_summary.tsv" >/dev/null
 grep -F 'Collected plots	14' "$out/04_reports/key_metrics.tsv" >/dev/null
 grep -F 'Linked HTML reports	6' "$out/04_reports/key_metrics.tsv" >/dev/null
-grep -F 'rnaseq-report-flow	0.1.0-r4	taffish flow' "$out/04_reports/versions.tsv" >/dev/null
+grep -F 'rnaseq-report-flow	0.2.0-r1	taffish flow' "$out/04_reports/versions.tsv" >/dev/null
+grep -F 'denovo_present	no' "$out/04_reports/project_summary.tsv" >/dev/null
 grep -F 'rnaseq-de-flow' "$out/04_reports/versions.tsv" >/dev/null
 grep -F 'rnaseq-de-flow' "$out/04_reports/tool_links.tsv" >/dev/null
 grep -F 'https://github.com/taffish/rnaseq-de-flow' "$out/04_reports/tool_links.tsv" >/dev/null
@@ -372,6 +505,69 @@ grep -F '"flow": "rnaseq-report-flow"' "$out/run.manifest.json" >/dev/null
 grep -F '"interpretation_guide":' "$out/run.manifest.json" >/dev/null
 if command -v python3 >/dev/null 2>&1; then
     python3 -m json.tool "$out/run.manifest.json" >/dev/null
+fi
+
+echo "[SMOKE] rnaseq-report-flow tiny de novo fixture"
+(
+    cd "$run_dir"
+    "$flow_cmd" \
+        --denovo-assembly-out "$denovo_assembly_out" \
+        --denovo-expression-out "$denovo_expression_out" \
+        --denovo-annotation-out "$denovo_annotation_out" \
+        --project-name "Smoke de novo RNA-seq report" \
+        --analysis-mode denovo \
+        --analysis-route salmon \
+        --de-source salmon \
+        --outdir report-denovo
+)
+
+denovo_out="$run_dir/report-denovo"
+test -s "$denovo_out/04_reports/rnaseq_report.html"
+test -s "$denovo_out/04_reports/report_interpretation.html"
+test -s "$denovo_out/04_reports/project_summary.tsv"
+test -s "$denovo_out/04_reports/key_metrics.tsv"
+test -s "$denovo_out/04_reports/collected_files.tsv"
+test -s "$denovo_out/04_reports/html_reports.tsv"
+grep -F 'Smoke de novo RNA-seq report' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'De novo Assembly, Expression, and Annotation' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F '无参组装、表达与注释' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'De novo route aware' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F '支持无参路线' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'Skipped by analysis mode' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F '按分析模式跳过' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'Assembly quality' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'De novo expression semantics' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'Annotation and enrichment readiness' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'Enrichment-ready' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'De novo RNA-seq Route' "$denovo_out/04_reports/report_interpretation.html" >/dev/null
+grep -F '无参 RNA-seq 路线' "$denovo_out/04_reports/report_interpretation.html" >/dev/null
+grep -F 'denovo_present	yes' "$denovo_out/04_reports/project_summary.tsv" >/dev/null
+grep -F 'provided_modules	3' "$denovo_out/04_reports/project_summary.tsv" >/dev/null
+grep -F 'Route	salmon' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'DE source	salmon' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'De novo filtered transcripts	42' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'De novo N50	1200' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'De novo BUSCO	complete' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'De novo matrix semantics	tx2gene or cluster mapping: cluster-derived pseudo-gene matrix' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'De novo transcript rows	42' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'Pseudo-gene rows	10' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'Annotated transcripts	30' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'GO gene sets	8' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'denovo_assembly	assembly_stats' "$denovo_out/04_reports/collected_files.tsv" >/dev/null
+grep -F 'denovo_expression	matrix_semantics' "$denovo_out/04_reports/collected_files.tsv" >/dev/null
+grep -F 'denovo_annotation	transcript_annotation' "$denovo_out/04_reports/collected_files.tsv" >/dev/null
+grep -F 'denovo_annotation	denovo_go' "$denovo_out/04_reports/collected_files.tsv" >/dev/null
+grep -F 'denovo_assembly	multiqc' "$denovo_out/04_reports/html_reports.tsv" >/dev/null
+grep -F 'denovo_expression	fastqc_S1' "$denovo_out/04_reports/html_reports.tsv" >/dev/null
+grep -F 'rnaseq-denovo-assembly-flow' "$denovo_out/04_reports/tool_links.tsv" >/dev/null
+grep -F 'rnaseq-denovo-expression-flow' "$denovo_out/04_reports/tool_links.tsv" >/dev/null
+grep -F 'rnaseq-denovo-annotation-flow' "$denovo_out/04_reports/tool_links.tsv" >/dev/null
+grep -F 'https://github.com/taffish/rnaseq-denovo-assembly-flow' "$denovo_out/04_reports/tool_links.tsv" >/dev/null
+grep -F '"denovo_present": "yes"' "$denovo_out/run.manifest.json" >/dev/null
+assert_no_mojibake "$denovo_out/04_reports/rnaseq_report.html"
+assert_no_mojibake "$denovo_out/04_reports/report_interpretation.html"
+if command -v python3 >/dev/null 2>&1; then
+    python3 -m json.tool "$denovo_out/run.manifest.json" >/dev/null
 fi
 
 echo "[SMOKE] C-locale report rendering"
@@ -421,7 +617,7 @@ test -s "$out/04_reports/rnaseq_report.html"
 test -s "$out/04_reports/report_interpretation.html"
 grep -F 'provided_modules	1' "$out/04_reports/project_summary.tsv" >/dev/null
 
-stray=$(find "$run_dir" -mindepth 1 -maxdepth 1 ! -name expression-out ! -name align-out ! -name count-out ! -name alignment-qc-out ! -name de-out ! -name enrichment-out ! -name report-out ! -name report-c-locale -print)
+stray=$(find "$run_dir" -mindepth 1 -maxdepth 1 ! -name expression-out ! -name align-out ! -name count-out ! -name alignment-qc-out ! -name de-out ! -name enrichment-out ! -name denovo-assembly-out ! -name denovo-expression-out ! -name denovo-annotation-out ! -name report-out ! -name report-denovo ! -name report-c-locale -print)
 if [ -n "$stray" ]; then
     echo "smoke: flow wrote unexpected files outside outdir:" >&2
     printf '%s\n' "$stray" >&2
