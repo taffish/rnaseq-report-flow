@@ -34,7 +34,7 @@ taf check
 echo "[SMOKE] taf build"
 taf build
 
-flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.2.0-r1"
+flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.2.0-r2"
 if [ ! -x "$flow_cmd" ]; then
     echo "smoke: built flow command is missing or not executable: $flow_cmd" >&2
     exit 1
@@ -285,9 +285,9 @@ transcript_rows	42
 gene_rows	10
 EOF
 cat > "$denovo_expression_out/04_reports/expression_summary.tsv" <<'EOF'
-metric	value
-transcript_rows	42
-gene_rows	10
+sample_id	layout	trimmed	quant_sf	estimated_num_reads
+S1	single	true	salmon/S1/quant.sf	1000
+S2	single	true	salmon/S2/quant.sf	1200
 EOF
 cat > "$denovo_expression_out/04_reports/quant_files.tsv" <<'EOF'
 sample_id	quant_file
@@ -484,7 +484,7 @@ grep -F 'plot_groups	14' "$out/04_reports/project_summary.tsv" >/dev/null
 grep -F 'html_report_links	6' "$out/04_reports/project_summary.tsv" >/dev/null
 grep -F 'Collected plots	14' "$out/04_reports/key_metrics.tsv" >/dev/null
 grep -F 'Linked HTML reports	6' "$out/04_reports/key_metrics.tsv" >/dev/null
-grep -F 'rnaseq-report-flow	0.2.0-r1	taffish flow' "$out/04_reports/versions.tsv" >/dev/null
+grep -F 'rnaseq-report-flow	0.2.0-r2	taffish flow' "$out/04_reports/versions.tsv" >/dev/null
 grep -F 'denovo_present	no' "$out/04_reports/project_summary.tsv" >/dev/null
 grep -F 'rnaseq-de-flow' "$out/04_reports/versions.tsv" >/dev/null
 grep -F 'rnaseq-de-flow' "$out/04_reports/tool_links.tsv" >/dev/null
@@ -533,6 +533,8 @@ grep -F 'De novo Assembly, Expression, and Annotation' "$denovo_out/04_reports/r
 grep -F '无参组装、表达与注释' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'De novo route aware' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
 grep -F '支持无参路线' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'Transcriptome assembly' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F '转录组组装' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'Skipped by analysis mode' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
 grep -F '按分析模式跳过' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'Assembly quality' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
@@ -543,8 +545,12 @@ grep -F 'De novo RNA-seq Route' "$denovo_out/04_reports/report_interpretation.ht
 grep -F '无参 RNA-seq 路线' "$denovo_out/04_reports/report_interpretation.html" >/dev/null
 grep -F 'denovo_present	yes' "$denovo_out/04_reports/project_summary.tsv" >/dev/null
 grep -F 'provided_modules	3' "$denovo_out/04_reports/project_summary.tsv" >/dev/null
-grep -F 'Route	salmon' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
-grep -F 'DE source	salmon' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'Route	de novo salmon (assembled transcriptome)' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'DE source	de novo pseudo-gene counts' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'Avg Salmon reads	1100.00' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'Avg mapped %	N/A (de novo)' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'featureCounts assigned	N/A (de novo)' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'QC assigned tags	N/A (de novo)' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
 grep -F 'De novo filtered transcripts	42' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
 grep -F 'De novo N50	1200' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null
 grep -F 'De novo BUSCO	complete' "$denovo_out/04_reports/key_metrics.tsv" >/dev/null

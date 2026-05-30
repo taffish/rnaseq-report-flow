@@ -111,7 +111,7 @@ taf check
 echo "[FORMAL] taf build"
 taf build
 
-flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.2.0-r1"
+flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.2.0-r2"
 if [ ! -x "$flow_cmd" ]; then
     echo "formal: built report flow command is missing or not executable: $flow_cmd" >&2
     exit 1
