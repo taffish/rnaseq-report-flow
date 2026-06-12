@@ -87,7 +87,7 @@ do
     fi
 done
 
-run_root="$script_dir/test-real-run-report-denovo-0.3.0-r1"
+run_root="$script_dir/test-real-run-report-denovo-0.3.0-r2"
 if [ -e "$run_root" ]; then
     if is_true "${FORCE:-false}"; then
         rm -rf "$run_root"
@@ -129,7 +129,7 @@ echo "[DENOVO-REAL] build rnaseq-report-flow"
 assembly_flow_cmd="$assembly_flow_dir/target/taf-rnaseq-denovo-assembly-flow-v0.2.0-r1"
 expression_flow_cmd="$expression_flow_dir/target/taf-rnaseq-denovo-expression-flow-v0.2.0-r1"
 annotation_flow_cmd="$annotation_flow_dir/target/taf-rnaseq-denovo-annotation-flow-v0.2.0-r1"
-report_flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.3.0-r1"
+report_flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.3.0-r2"
 
 for cmd in "$assembly_flow_cmd" "$expression_flow_cmd" "$annotation_flow_cmd" "$report_flow_cmd"; do
     if [ ! -x "$cmd" ]; then

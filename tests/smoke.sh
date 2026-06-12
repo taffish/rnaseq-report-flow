@@ -34,7 +34,7 @@ taf check
 echo "[SMOKE] taf build"
 taf build
 
-flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.3.0-r1"
+flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.3.0-r2"
 if [ ! -x "$flow_cmd" ]; then
     echo "smoke: built flow command is missing or not executable: $flow_cmd" >&2
     exit 1
@@ -48,6 +48,20 @@ assert_no_mojibake() {
             exit 1
         fi
     done
+}
+
+decode_base64_file() {
+    encoded=$1
+    output_file=$2
+    if printf '%s' "$encoded" | base64 -d > "$output_file" 2>/dev/null; then
+        return 0
+    fi
+    printf '%s' "$encoded" | base64 -D > "$output_file"
+}
+
+write_tiny_png() {
+    output_file=$1
+    decode_base64_file 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/lD0+8wAAAABJRU5ErkJggg==' "$output_file"
 }
 
 echo "[SMOKE] help and version"
@@ -199,7 +213,7 @@ for plot in \
     normalized_count_distribution top_genes_expression
 do
     printf 'PDF smoke\n' > "$de_out/03_results/plots/$plot.pdf"
-    printf 'PNG smoke\n' > "$de_out/03_results/plots/$plot.png"
+    write_tiny_png "$de_out/03_results/plots/$plot.png"
 done
 cat > "$de_out/03_results/plots/plot_summary.tsv" <<'EOF'
 metric	value
@@ -222,13 +236,13 @@ set_id	pvalue
 set_beta	0.02
 EOF
 printf 'PDF smoke\n' > "$enrichment_out/03_results/enrichment/dotplot.pdf"
-printf 'PNG smoke\n' > "$enrichment_out/03_results/enrichment/dotplot.png"
+write_tiny_png "$enrichment_out/03_results/enrichment/dotplot.png"
 printf 'PDF smoke\n' > "$enrichment_out/03_results/enrichment/dotplot.original.pdf"
-printf 'PNG smoke\n' > "$enrichment_out/03_results/enrichment/dotplot.original.png"
+write_tiny_png "$enrichment_out/03_results/enrichment/dotplot.original.png"
 for plot in ora_barplot gsea_nes_plot gsea_enrichment_curves
 do
     printf 'PDF smoke\n' > "$enrichment_out/03_results/enrichment/$plot.pdf"
-    printf 'PNG smoke\n' > "$enrichment_out/03_results/enrichment/$plot.png"
+    write_tiny_png "$enrichment_out/03_results/enrichment/$plot.png"
 done
 cat > "$enrichment_out/03_results/enrichment/dotplot_source.tsv" <<'EOF'
 metric	value
@@ -457,6 +471,11 @@ grep -F 'target="_blank" rel="noopener"' "$out/04_reports/rnaseq_report.html" >/
 grep -F 'https://github.com/taffish' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'https://taffish.github.io/' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'data:image/png;base64,' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F '<img src="data:image/png;base64,' "$out/04_reports/rnaseq_report.html" >/dev/null
+if grep -F '<img src="../03_results/collected_plots/' "$out/04_reports/rnaseq_report.html" >/dev/null; then
+    echo "smoke: plot images must be embedded in rnaseq_report.html, not loaded through relative collected_plots paths" >&2
+    exit 1
+fi
 assert_no_mojibake "$out/04_reports/rnaseq_report.html"
 grep -F 'RNA-seq Interpretation Guide' "$out/04_reports/report_interpretation.html" >/dev/null
 grep -F 'RNA-seq 报告解读指南' "$out/04_reports/report_interpretation.html" >/dev/null
@@ -515,7 +534,7 @@ grep -F 'Collected plots	14' "$out/04_reports/key_metrics.tsv" >/dev/null
 grep -F 'Linked HTML reports	7' "$out/04_reports/key_metrics.tsv" >/dev/null
 grep -F 'Embedded tables	' "$out/04_reports/key_metrics.tsv" >/dev/null
 grep -F 'Embedded HTML reports	7' "$out/04_reports/key_metrics.tsv" >/dev/null
-grep -F 'rnaseq-report-flow	0.3.0-r1	taffish flow' "$out/04_reports/versions.tsv" >/dev/null
+grep -F 'rnaseq-report-flow	0.3.0-r2	taffish flow' "$out/04_reports/versions.tsv" >/dev/null
 grep -F 'flow-report-template	0.1.0	repos/apps/templates/flow-report' "$out/04_reports/versions.tsv" >/dev/null
 grep -F '0.1.0' "$out/04_reports/report_template_version.txt" >/dev/null
 grep -F 'denovo_present	no' "$out/04_reports/project_summary.tsv" >/dev/null
@@ -537,6 +556,7 @@ test -s "$out/03_results/collected_html/report.interpretation/index.html"
 test -s "$out/03_results/collected_html/report.interpretation/index.embedded.html"
 grep -F 'de	pca_plot' "$out/04_reports/collected_files.tsv" >/dev/null
 grep -F 'de	pca_plot	png' "$out/04_reports/plot_files.tsv" >/dev/null
+grep -F 'png_data_uri' "$out/04_reports/plot_gallery.tsv" >/dev/null
 grep -F 'enrichment	dotplot_original' "$out/04_reports/plot_gallery.tsv" >/dev/null
 grep -F 'enrichment	ora_barplot' "$out/04_reports/plot_gallery.tsv" >/dev/null
 grep -F 'enrichment	gsea_nes_plot' "$out/04_reports/plot_gallery.tsv" >/dev/null

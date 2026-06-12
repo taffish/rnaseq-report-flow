@@ -111,7 +111,7 @@ taf check
 echo "[FORMAL] taf build"
 taf build
 
-flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.3.0-r1"
+flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.3.0-r2"
 if [ ! -x "$flow_cmd" ]; then
     echo "formal: built report flow command is missing or not executable: $flow_cmd" >&2
     exit 1
@@ -241,6 +241,11 @@ grep -F 'ORA visual summary' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'GSEA directional summary' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'target="_blank" rel="noopener"' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'data:image/png;base64,' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F '<img src="data:image/png;base64,' "$out/04_reports/rnaseq_report.html" >/dev/null
+if grep -F '<img src="../03_results/collected_plots/' "$out/04_reports/rnaseq_report.html" >/dev/null; then
+    echo "formal: plot images must be embedded in rnaseq_report.html, not loaded through relative collected_plots paths" >&2
+    exit 1
+fi
 grep -F 'id="taffish-embedded-html-reports"' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'initEmbeddedReports' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'id="taffish-embedded-tables"' "$out/04_reports/rnaseq_report.html" >/dev/null
@@ -312,6 +317,7 @@ test -s "$out/03_results/collected_html/report.interpretation/index.embedded.htm
 grep -F 'de	results' "$out/04_reports/collected_files.tsv" >/dev/null
 grep -F 'enrichment	ora_results' "$out/04_reports/collected_files.tsv" >/dev/null
 grep -F 'de	pca_plot	png' "$out/04_reports/plot_files.tsv" >/dev/null
+grep -F 'png_data_uri' "$out/04_reports/plot_gallery.tsv" >/dev/null
 grep -F 'enrichment	dotplot_original' "$out/04_reports/plot_gallery.tsv" >/dev/null
 grep -F 'enrichment	ora_barplot' "$out/04_reports/plot_gallery.tsv" >/dev/null
 grep -F 'enrichment	gsea_nes_plot' "$out/04_reports/plot_gallery.tsv" >/dev/null
