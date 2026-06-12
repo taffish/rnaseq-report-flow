@@ -34,7 +34,7 @@ taf check
 echo "[SMOKE] taf build"
 taf build
 
-flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.2.0-r2"
+flow_cmd="$project_dir/target/taf-rnaseq-report-flow-v0.3.0-r1"
 if [ ! -x "$flow_cmd" ]; then
     echo "smoke: built flow command is missing or not executable: $flow_cmd" >&2
     exit 1
@@ -404,15 +404,21 @@ test -s "$out/04_reports/collected_files.tsv"
 test -s "$out/04_reports/plot_files.tsv"
 test -s "$out/04_reports/plot_gallery.tsv"
 test -s "$out/04_reports/html_reports.tsv"
+test -s "$out/04_reports/embedded_html_reports.tsv"
 test -s "$out/04_reports/tool_links.tsv"
 test -s "$out/04_reports/commands.sh"
 test -s "$out/04_reports/versions.tsv"
 test -s "$out/04_reports/methods.txt"
 test -s "$out/04_reports/flow_summary.tsv"
+test -s "$out/04_reports/report_template_version.txt"
 test -s "$out/run.manifest.json"
 
 grep -F 'Smoke RNA-seq report' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'TAFFISH' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'data-template="taffish-flow-report"' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'data-template-version="0.1.0"' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'class="section-nav side-links"' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'class="nav-group"' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'data-lang-toggle="en"' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'data-lang-toggle="zh"' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'html[data-lang="en"] .lang-zh{display:none!important}' "$out/04_reports/rnaseq_report.html" >/dev/null
@@ -424,13 +430,24 @@ grep -F 'TAFFISH RNA-seq 项目报告' "$out/04_reports/rnaseq_report.html" >/de
 grep -F 'How to Read This Report' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F '如何阅读本报告' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'report_interpretation.html' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'data-embedded-report-id="report.interpretation"' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'id="taffish-embedded-html-reports"' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'initEmbeddedReports' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'id="taffish-embedded-tables"' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'initEmbeddedTables' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'data-embedded-table-id=' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'class="table-link-body"' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F '.embedded-table-link a{align-self:flex-start;margin-top:auto}' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'Embedded table payloads' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'data-embedded-report-id="expression.multiqc"' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'Read QC and Expression Quantification' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F '测序质控与表达定量' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'Differential Expression' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F '差异表达' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'Functional Enrichment' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F '功能富集' "$out/04_reports/rnaseq_report.html" >/dev/null
-grep -F 'IntersectionObserver' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'currentSectionId' "$out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'requestAnimationFrame(update)' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'workflow-map' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'Deliverables and Output Structure' "$out/04_reports/rnaseq_report.html" >/dev/null
 grep -F '交付文件与输出结构' "$out/04_reports/rnaseq_report.html" >/dev/null
@@ -481,10 +498,26 @@ grep -F 'rnaseq_report.html' "$out/04_reports/report_interpretation.html" >/dev/
 assert_no_mojibake "$out/04_reports/report_interpretation.html"
 grep -F 'provided_modules	6' "$out/04_reports/project_summary.tsv" >/dev/null
 grep -F 'plot_groups	14' "$out/04_reports/project_summary.tsv" >/dev/null
-grep -F 'html_report_links	6' "$out/04_reports/project_summary.tsv" >/dev/null
+grep -F 'html_report_links	7' "$out/04_reports/project_summary.tsv" >/dev/null
+grep -F 'embedded_html_reports	7' "$out/04_reports/project_summary.tsv" >/dev/null
+grep -F 'embedded_tables	' "$out/04_reports/project_summary.tsv" >/dev/null
+grep -F 'report_template	taffish-flow-report' "$out/04_reports/project_summary.tsv" >/dev/null
+grep -F 'report_template_version	0.1.0' "$out/04_reports/project_summary.tsv" >/dev/null
+if grep -F 'Route	.' "$out/04_reports/key_metrics.tsv" >/dev/null; then
+    echo "smoke: Route metric should not be an uninformative dot" >&2
+    exit 1
+fi
+if grep -F 'DE source	.' "$out/04_reports/key_metrics.tsv" >/dev/null; then
+    echo "smoke: DE source metric should not be an uninformative dot" >&2
+    exit 1
+fi
 grep -F 'Collected plots	14' "$out/04_reports/key_metrics.tsv" >/dev/null
-grep -F 'Linked HTML reports	6' "$out/04_reports/key_metrics.tsv" >/dev/null
-grep -F 'rnaseq-report-flow	0.2.0-r2	taffish flow' "$out/04_reports/versions.tsv" >/dev/null
+grep -F 'Linked HTML reports	7' "$out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'Embedded tables	' "$out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'Embedded HTML reports	7' "$out/04_reports/key_metrics.tsv" >/dev/null
+grep -F 'rnaseq-report-flow	0.3.0-r1	taffish flow' "$out/04_reports/versions.tsv" >/dev/null
+grep -F 'flow-report-template	0.1.0	repos/apps/templates/flow-report' "$out/04_reports/versions.tsv" >/dev/null
+grep -F '0.1.0' "$out/04_reports/report_template_version.txt" >/dev/null
 grep -F 'denovo_present	no' "$out/04_reports/project_summary.tsv" >/dev/null
 grep -F 'rnaseq-de-flow' "$out/04_reports/versions.tsv" >/dev/null
 grep -F 'rnaseq-de-flow' "$out/04_reports/tool_links.tsv" >/dev/null
@@ -493,8 +526,15 @@ grep -F 'enrichment	ora_results' "$out/04_reports/collected_files.tsv" >/dev/nul
 grep -F 'enrichment	plot_summary' "$out/04_reports/collected_files.tsv" >/dev/null
 grep -F 'expression	multiqc' "$out/04_reports/html_reports.tsv" >/dev/null
 grep -F 'alignment_qc	qualimap_S1' "$out/04_reports/html_reports.tsv" >/dev/null
+grep -F 'expression.multiqc' "$out/04_reports/embedded_html_reports.tsv" >/dev/null
+grep -F 'alignment_qc.qualimap_S1' "$out/04_reports/embedded_html_reports.tsv" >/dev/null
+grep -F 'report	interpretation' "$out/04_reports/embedded_html_reports.tsv" >/dev/null
 test -s "$out/03_results/collected_html/expression.multiqc/index.html"
+test -s "$out/03_results/collected_html/expression.multiqc/index.embedded.html"
 test -s "$out/03_results/collected_html/alignment_qc.qualimap_S1/index.html"
+test -s "$out/03_results/collected_html/alignment_qc.qualimap_S1/index.embedded.html"
+test -s "$out/03_results/collected_html/report.interpretation/index.html"
+test -s "$out/03_results/collected_html/report.interpretation/index.embedded.html"
 grep -F 'de	pca_plot' "$out/04_reports/collected_files.tsv" >/dev/null
 grep -F 'de	pca_plot	png' "$out/04_reports/plot_files.tsv" >/dev/null
 grep -F 'enrichment	dotplot_original' "$out/04_reports/plot_gallery.tsv" >/dev/null
@@ -503,9 +543,44 @@ grep -F 'enrichment	gsea_nes_plot' "$out/04_reports/plot_gallery.tsv" >/dev/null
 grep -F 'enrichment	gsea_enrichment_curves' "$out/04_reports/plot_gallery.tsv" >/dev/null
 grep -F '"flow": "rnaseq-report-flow"' "$out/run.manifest.json" >/dev/null
 grep -F '"interpretation_guide":' "$out/run.manifest.json" >/dev/null
+grep -F '"embedded_html_reports":' "$out/run.manifest.json" >/dev/null
+grep -F '"embedded_tables":' "$out/run.manifest.json" >/dev/null
+grep -F '"template": "taffish-flow-report"' "$out/run.manifest.json" >/dev/null
+grep -F '"template_version": "0.1.0"' "$out/run.manifest.json" >/dev/null
 if command -v python3 >/dev/null 2>&1; then
     python3 -m json.tool "$out/run.manifest.json" >/dev/null
 fi
+
+echo "[SMOKE] archived standard report package rerender"
+(
+    cd "$run_dir"
+    "$flow_cmd" \
+        --standard-out "$out" \
+        --project-name "Smoke RNA-seq archived package rerender" \
+        --analysis-mode reference \
+        --outdir report-archive
+)
+archive_out="$run_dir/report-archive"
+test -s "$archive_out/04_reports/rnaseq_report.html"
+test -s "$archive_out/04_reports/project_summary.tsv"
+test -s "$archive_out/run.manifest.json"
+grep -F 'standard_report_package	yes' "$archive_out/04_reports/project_summary.tsv" >/dev/null
+grep -F '# standard_report_package=yes' "$archive_out/04_reports/commands.sh" >/dev/null
+grep -F 'data-template="taffish-flow-report"' "$archive_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'class="table-link-body"' "$archive_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'currentSectionId' "$archive_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'embedded_tables	' "$archive_out/04_reports/project_summary.tsv" >/dev/null
+if grep -F 'Route	.' "$archive_out/04_reports/key_metrics.tsv" >/dev/null; then
+    echo "smoke: archived package Route metric should not be an uninformative dot" >&2
+    exit 1
+fi
+if grep -F 'DE source	.' "$archive_out/04_reports/key_metrics.tsv" >/dev/null; then
+    echo "smoke: archived package DE source metric should not be an uninformative dot" >&2
+    exit 1
+fi
+grep -F '"embedded_tables":' "$archive_out/run.manifest.json" >/dev/null
+grep -F '"standard_report_package": "yes"' "$archive_out/run.manifest.json" >/dev/null
+grep -F '"template": "taffish-flow-report"' "$archive_out/run.manifest.json" >/dev/null
 
 echo "[SMOKE] rnaseq-report-flow tiny de novo fixture"
 (
@@ -528,7 +603,16 @@ test -s "$denovo_out/04_reports/project_summary.tsv"
 test -s "$denovo_out/04_reports/key_metrics.tsv"
 test -s "$denovo_out/04_reports/collected_files.tsv"
 test -s "$denovo_out/04_reports/html_reports.tsv"
+test -s "$denovo_out/04_reports/embedded_html_reports.tsv"
 grep -F 'Smoke de novo RNA-seq report' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'data-template="taffish-flow-report"' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'data-template-version="0.1.0"' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'class="nav-group"' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'currentSectionId' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'id="taffish-embedded-tables"' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'initEmbeddedTables' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'class="table-link-body"' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
+grep -F 'data-embedded-report-id="report.interpretation"' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'De novo Assembly, Expression, and Annotation' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
 grep -F '无参组装、表达与注释' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
 grep -F 'De novo route aware' "$denovo_out/04_reports/rnaseq_report.html" >/dev/null
@@ -565,6 +649,11 @@ grep -F 'denovo_annotation	transcript_annotation' "$denovo_out/04_reports/collec
 grep -F 'denovo_annotation	denovo_go' "$denovo_out/04_reports/collected_files.tsv" >/dev/null
 grep -F 'denovo_assembly	multiqc' "$denovo_out/04_reports/html_reports.tsv" >/dev/null
 grep -F 'denovo_expression	fastqc_S1' "$denovo_out/04_reports/html_reports.tsv" >/dev/null
+grep -F 'denovo_assembly.multiqc' "$denovo_out/04_reports/embedded_html_reports.tsv" >/dev/null
+grep -F 'denovo_expression.fastqc_S1' "$denovo_out/04_reports/embedded_html_reports.tsv" >/dev/null
+grep -F 'report	interpretation' "$denovo_out/04_reports/embedded_html_reports.tsv" >/dev/null
+test -s "$denovo_out/03_results/collected_html/report.interpretation/index.embedded.html"
+grep -F 'report_template_version	0.1.0' "$denovo_out/04_reports/project_summary.tsv" >/dev/null
 grep -F 'rnaseq-denovo-assembly-flow' "$denovo_out/04_reports/tool_links.tsv" >/dev/null
 grep -F 'rnaseq-denovo-expression-flow' "$denovo_out/04_reports/tool_links.tsv" >/dev/null
 grep -F 'rnaseq-denovo-annotation-flow' "$denovo_out/04_reports/tool_links.tsv" >/dev/null
@@ -623,7 +712,7 @@ test -s "$out/04_reports/rnaseq_report.html"
 test -s "$out/04_reports/report_interpretation.html"
 grep -F 'provided_modules	1' "$out/04_reports/project_summary.tsv" >/dev/null
 
-stray=$(find "$run_dir" -mindepth 1 -maxdepth 1 ! -name expression-out ! -name align-out ! -name count-out ! -name alignment-qc-out ! -name de-out ! -name enrichment-out ! -name denovo-assembly-out ! -name denovo-expression-out ! -name denovo-annotation-out ! -name report-out ! -name report-denovo ! -name report-c-locale -print)
+stray=$(find "$run_dir" -mindepth 1 -maxdepth 1 ! -name expression-out ! -name align-out ! -name count-out ! -name alignment-qc-out ! -name de-out ! -name enrichment-out ! -name denovo-assembly-out ! -name denovo-expression-out ! -name denovo-annotation-out ! -name report-out ! -name report-archive ! -name report-denovo ! -name report-c-locale -print)
 if [ -n "$stray" ]; then
     echo "smoke: flow wrote unexpected files outside outdir:" >&2
     printf '%s\n' "$stray" >&2
